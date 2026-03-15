@@ -3,35 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Launching AR...</title>
+    <title>Loading AR...</title>
     <script>
         window.onload = function() {
-            // Your direct links to the 3D models and fallback page
+            // Your exact GitHub links
             const iosModel = "https://mostafaebrahiem.github.io/ar-models/cube.usdz"; 
             const androidModel = "https://mostafaebrahiem.github.io/ar-models/cube.glb";
             const fallbackUrl = "https://mostafaebrahiem.github.io/ar-models/fallback.html"; 
 
             const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
-            // Check if the user is on an iPhone/iPad
+            // 1. If it is an iPhone or iPad
             if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
-                // Instantly launch Apple AR Quick Look
                 window.location.href = iosModel; 
             } 
-            // Check if the user is on an Android
+            // 2. If it is an Android device
             else if (/android/i.test(userAgent)) {
-                // Instantly launch Google Scene Viewer via Android Intent, routing to fallback if it fails
+                // Tries to launch Google AR, but immediately routes to fallback.html if it fails (like on Huawei)
                 window.location.href = `intent://arvr.google.com/scene-viewer/1.0?file=${androidModel}&mode=ar_only#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=${fallbackUrl};end;`;
             } 
-            // If they are on a desktop PC or an unsupported device
+            // 3. If it is a desktop PC or unknown device
             else {
                 window.location.href = fallbackUrl;
             }
         };
     </script>
 </head>
-<body style="text-align: center; font-family: sans-serif; margin-top: 50px;">
-    <h2>Opening AR Camera...</h2>
-    <p>Please point your phone at the floor or a flat surface.</p>
+<body style="text-align: center; font-family: sans-serif; margin-top: 50px; background-color: #f4f4f4;">
+    <h2>Opening AR Experience...</h2>
+    <p>Please wait a moment.</p>
 </body>
 </html>

@@ -8,16 +8,38 @@
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     
     <style>
-        /* This makes the 3D viewer take up the entire phone screen */
-        body { margin: 0; padding: 0; background-color: #ffffff; overflow: hidden; }
-        model-viewer { width: 100vw; height: 100vh; }
+        /* Removes borders and makes the 3D canvas fill the whole screen */
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background-color: #ffffff; 
+            overflow: hidden; 
+        }
+        model-viewer { 
+            width: 100vw; 
+            height: 100vh; 
+        }
+        /* Optional: A small back button if you want them to return to a store page later */
+        .header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            font-family: sans-serif;
+            color: #333;
+        }
     </style>
 </head>
 <body>
 
+    <div class="header">
+        <h3>Interactive 3D View</h3>
+        <p>Use your fingers to rotate and zoom.</p>
+    </div>
+
     <model-viewer 
         src="https://mostafaebrahiem.github.io/ar-models/cube.glb" 
-        alt="A 3D model of a cube" 
+        alt="A 3D model" 
         auto-rotate 
         camera-controls>
     </model-viewer>
