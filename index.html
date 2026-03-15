@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Launching AR...</title>
+    <script>
+        window.onload = function() {
+            // Your direct links to the 3D models and fallback page
+            const iosModel = "https://mostafaebrahiem.github.io/ar-models/cube.usdz"; 
+            const androidModel = "https://mostafaebrahiem.github.io/ar-models/cube.glb";
+            const fallbackUrl = "https://mostafaebrahiem.github.io/ar-models/fallback.html"; 
+
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+            // Check if the user is on an iPhone/iPad
+            if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+                // Instantly launch Apple AR Quick Look
+                window.location.href = iosModel; 
+            } 
+            // Check if the user is on an Android
+            else if (/android/i.test(userAgent)) {
+                // Instantly launch Google Scene Viewer via Android Intent, routing to fallback if it fails
+                window.location.href = `intent://arvr.google.com/scene-viewer/1.0?file=${androidModel}&mode=ar_only#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=${fallbackUrl};end;`;
+            } 
+            // If they are on a desktop PC or an unsupported device
+            else {
+                window.location.href = fallbackUrl;
+            }
+        };
+    </script>
+</head>
+<body style="text-align: center; font-family: sans-serif; margin-top: 50px;">
+    <h2>Opening AR Camera...</h2>
+    <p>Please point your phone at the floor or a flat surface.</p>
+</body>
+</html>
