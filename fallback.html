@@ -4,45 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Product Viewer</title>
-    
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
-    
     <style>
-        /* Removes borders and makes the 3D canvas fill the whole screen */
-        body { 
-            margin: 0; 
-            padding: 0; 
-            background-color: #ffffff; 
-            overflow: hidden; 
-        }
-        model-viewer { 
-            width: 100vw; 
-            height: 100vh; 
-        }
-        /* Optional: A small back button if you want them to return to a store page later */
-        .header {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 10;
-            font-family: sans-serif;
-            color: #333;
-        }
+        body { margin: 0; padding: 0; background-color: #ffffff; overflow: hidden; }
+        model-viewer { width: 100vw; height: 100vh; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h3>Interactive 3D View</h3>
-        <p>Use your fingers to rotate and zoom.</p>
-    </div>
-
     <model-viewer 
-        src="https://mostafaebrahiem.github.io/ar-models/cube.glb" 
+        id="viewer"
         alt="A 3D model" 
         auto-rotate 
         camera-controls>
     </model-viewer>
 
+    <script>
+        // Grab the Firebase model URL from the web address
+        const urlParams = new URLSearchParams(window.location.search);
+        const modelUrl = urlParams.get('model');
+        
+        // Inject that URL into the 3D viewer
+        if(modelUrl) {
+            document.getElementById('viewer').setAttribute('src', modelUrl);
+        } else {
+            alert("No 3D model found!");
+        }
+    </script>
 </body>
 </html>

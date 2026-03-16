@@ -4,33 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loading AR...</title>
-    <script>
-        window.onload = function() {
-            // Your exact GitHub links
-            const iosModel = "https://mostafaebrahiem.github.io/ar-models/cube.usdz"; 
-            const androidModel = "https://mostafaebrahiem.github.io/ar-models/cube.glb";
-            const fallbackUrl = "https://mostafaebrahiem.github.io/ar-models/fallback.html"; 
-
-            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-
-            // 1. If it is an iPhone or iPad
-            if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
-                window.location.href = iosModel; 
-            } 
-            // 2. If it is an Android device
-            else if (/android/i.test(userAgent)) {
-                // Tries to launch Google AR, but immediately routes to fallback.html if it fails (like on Huawei)
-                window.location.href = `intent://arvr.google.com/scene-viewer/1.0?file=${androidModel}&mode=ar_only#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=${fallbackUrl};end;`;
-            } 
-            // 3. If it is a desktop PC or unknown device
-            else {
-                window.location.href = fallbackUrl;
-            }
-        };
-    </script>
 </head>
 <body style="text-align: center; font-family: sans-serif; margin-top: 50px; background-color: #f4f4f4;">
     <h2>Opening AR Experience...</h2>
     <p>Please wait a moment.</p>
+
+    <script type="module">
+        // 1. Import Firebase Database tools
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // 2. Your Exact Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDCAHxbic6CnLgieNd6vr0UKtByIX9XI-0",
+            authDomain: "dryclean-307e9.firebaseapp.com",
+            projectId: "dryclean-307e9",
+            storageBucket: "3dmosta1001", 
+            messagingSenderId: "1055119275702",
+            appId: "1:1055119275702:web:7d139a70004583b1be9817"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 3. The Routing Logic
+        async function launchAR() {
+            // Get the ID from the URL (e.g., ?id=aB3x9Yz)
+            const urlParams = new URLSearchParams(window.location.search);
+            const clientId = urlParams.get('id');
+
+            if (!clientId) {
+                document.body.innerHTML = "<h2>Error: Invalid QR Code.</h2>";
+                return;
+            }
+
+            try {
+                // Fetch the specific client record from the database
+                const docRef = doc(db, "clients", clientId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const modelUrl = data.modelUrl; // This is the Firebase .glb link
+
+                    // Add +1 to the scan count!
+                    await updateDoc(docRef, { scanCount: increment(1) });
+
+                    // Set up dynamic routing links
+                    const fallbackUrl = `https://mostafaebrahiem.github.io/ar-models/fallback.html?model=${encodeURIComponent(modelUrl)}`;
+                    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+                    // Detect device and route
+                    if (/android/i.test(userAgent)) {
+                        // Launch Google AR with the dynamic Firebase link
+                        window.location.href = `intent://arvr.google.com/scene-viewer/1.0?file=${modelUrl}&mode=ar_only#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(fallbackUrl)};end;`;
+                    } else {
+                        // Since we only uploaded a .glb (not a .usdz yet), we send iOS & Desktop straight to the fallback 3D viewer
+                        window.location.href = fallbackUrl;
+                    }
+
+                } else {
+                    document.body.innerHTML = "<h2>Error: 3D Model not found in database.</h2>";
+                }
+            } catch (error) {
+                console.error("Database error:", error);
+                document.body.innerHTML = "<h2>Error connecting to server.</h2>";
+            }
+        }
+
+        // Run the script instantly
+        launchAR();
+    </script>
 </body>
 </html>

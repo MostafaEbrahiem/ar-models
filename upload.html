@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Model Uploader</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f4f4; padding: 40px; display: flex; justify-content: center; }
+        .upload-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        input[type="file"] { margin: 20px 0; padding: 10px; width: 100%; box-sizing: border-box; }
+        button { background-color: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
+        #status { margin-top: 20px; font-weight: bold; color: #333; }
+        #link { margin-top: 10px; font-size: 14px; word-break: break-all; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+    <div class="upload-card">
+        <h2>Upload 3D Model</h2>
+        <p>Select a <b>.glb</b> or <b>.usdz</b> file to send to Cloud Storage & Database.</p>
+        
+        <input type="file" id="fileInput" accept=".glb,.usdz">
+        <button id="uploadBtn">Upload to Cloud</button>
+        
+        <div id="status">Waiting for file...</div>
+        <div id="link"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDCAHxbic6CnLgieNd6vr0UKtByIX9XI-0",
+            authDomain: "dryclean-307e9.firebaseapp.com",
+            projectId: "dryclean-307e9",
+            storageBucket: "3dmosta1001", 
+            messagingSenderId: "1055119275702",
+            appId: "1:1055119275702:web:7d139a70004583b1be9817",
+            measurementId: "G-0CHHNJTK3T"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const storage = getStorage(app);
+        const db = getFirestore(app);
+
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const statusText = document.getElementById('status');
+        const linkText = document.getElementById('link');
+
+        uploadBtn.addEventListener('click', () => {
+            const file = fileInput.files[0];
+            if (!file) {
+                statusText.innerText = "Please select a file first!";
+                statusText.style.color = "red";
+                return;
+            }
+
+            const storageRef = ref(storage, 'models/' + file.name);
+            const uploadTask = uploadBytesResumable(storageRef, file);
+
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    statusText.innerText = 'Uploading... ' + Math.round(progress) + '%';
+                    statusText.style.color = "#007bff";
+                }, 
+                (error) => {
+                    statusText.innerText = "Upload failed: " + error.message;
+                    statusText.style.color = "red";
+                }, 
+                () => {
+                    getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
+                        statusText.innerText = "Saving to Database...";
+                        
+                        try {
+                            const docRef = await addDoc(collection(db, "clients"), {
+                                fileName: file.name,
+                                modelUrl: downloadURL,
+                                scanCount: 0, 
+                                createdAt: serverTimestamp()
+                            });
+
+                            const customerLink = `https://mostafaebrahiem.github.io/ar-models/?id=${docRef.id}`;
+
+                            statusText.innerText = "Fully Completed!";
+                            statusText.style.color = "green";
+                            linkText.innerHTML = `
+                                <b>Success! Record Saved.</b><br><br>
+                                <b>Customer AR Link (Turn this into a QR):</b><br>
+                                <a href="${customerLink}" target="_blank">${customerLink}</a>
+                            `;
+                        } catch (e) {
+                            statusText.innerText = "Error saving to database: " + e.message;
+                            statusText.style.color = "red";
+                            console.error(e);
+                        }
+                    });
+                }
+            );
+        });
+    </script>
+</body>
+</html>
