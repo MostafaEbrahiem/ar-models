@@ -13,6 +13,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
+        // Your Exact Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyDCAHxbic6CnLgieNd6vr0UKtByIX9XI-0",
             authDomain: "dryclean-307e9.firebaseapp.com",
@@ -26,7 +27,6 @@
         const db = getFirestore(app);
 
         async function launchAR() {
-            // Get the unique ID from the URL (e.g., ?id=aB3x9Yz)
             const urlParams = new URLSearchParams(window.location.search);
             const clientId = urlParams.get('id');
 
@@ -36,7 +36,6 @@
             }
 
             try {
-                // Fetch the record from Firebase
                 const docRef = doc(db, "clients", clientId);
                 const docSnap = await getDoc(docRef);
 
@@ -47,15 +46,15 @@
                     // Add +1 to the scan count
                     await updateDoc(docRef, { scanCount: increment(1) });
 
-                    // Prepare the fallback link
                     const fallbackUrl = `https://mostafaebrahiem.github.io/ar-models/fallback.html?model=${encodeURIComponent(modelUrl)}`;
                     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
-                    // Detect device and route
                     if (/android/i.test(userAgent)) {
-                        window.location.href = `intent://arvr.google.com/scene-viewer/1.0?file=${modelUrl}&mode=ar_only#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(fallbackUrl)};end;`;
+                        // FIX: Safely encode the Firebase URL so Android doesn't delete the security token!
+                        const safeModelUrl = encodeURIComponent(modelUrl);
+                        
+                        window.location.href = `intent://arvr.google.com/scene-viewer/1.0?file=${safeModelUrl}&mode=ar_only#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(fallbackUrl)};end;`;
                     } else {
-                        // iOS and Desktop go to fallback for .glb files
                         window.location.href = fallbackUrl;
                     }
 
