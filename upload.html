@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Model Uploader</title>
@@ -14,18 +13,20 @@
         #status { margin-top: 20px; font-weight: bold; color: #333; }
         #link { margin-top: 10px; font-size: 14px; word-break: break-all; line-height: 1.5; }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
     <div class="upload-card">
         <h2>Upload 3D Model</h2>
-        <p>Select a <b>.glb</b> or <b>.usdz</b> file to send to Cloud Storage & Database.</p>
+        <p>Select a <b>.glb</b> file to send to Cloud Storage & Database.</p>
         
         <input type="file" id="fileInput" accept=".glb,.usdz">
         <button id="uploadBtn">Upload to Cloud</button>
         
         <div id="status">Waiting for file...</div>
         <div id="link"></div>
+        <div id="qrcode" style="margin-top: 20px; display: flex; justify-content: center;"></div>
     </div>
 
     <script type="module">
@@ -33,6 +34,7 @@
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
+        // Your exact Firebase Keys
         const firebaseConfig = {
             apiKey: "AIzaSyDCAHxbic6CnLgieNd6vr0UKtByIX9XI-0",
             authDomain: "dryclean-307e9.firebaseapp.com",
@@ -42,7 +44,7 @@
             appId: "1:1055119275702:web:7d139a70004583b1be9817",
             measurementId: "G-0CHHNJTK3T"
         };
-        
+
         const app = initializeApp(firebaseConfig);
         const storage = getStorage(app);
         const db = getFirestore(app);
@@ -78,6 +80,7 @@
                         statusText.innerText = "Saving to Database...";
                         
                         try {
+                            // Save to Database
                             const docRef = await addDoc(collection(db, "clients"), {
                                 fileName: file.name,
                                 modelUrl: downloadURL,
@@ -85,15 +88,25 @@
                                 createdAt: serverTimestamp()
                             });
 
+                            // Generate the unique link for this specific model
                             const customerLink = `https://mostafaebrahiem.github.io/ar-models/?id=${docRef.id}`;
 
                             statusText.innerText = "Fully Completed!";
                             statusText.style.color = "green";
                             linkText.innerHTML = `
                                 <b>Success! Record Saved.</b><br><br>
-                                <b>Customer AR Link (Turn this into a QR):</b><br>
+                                <b>Customer AR Link:</b><br>
                                 <a href="${customerLink}" target="_blank">${customerLink}</a>
                             `;
+
+                            // Draw the QR Code
+                            document.getElementById("qrcode").innerHTML = "";
+                            new QRCode(document.getElementById("qrcode"), {
+                                text: customerLink,
+                                width: 150,
+                                height: 150
+                            });
+
                         } catch (e) {
                             statusText.innerText = "Error saving to database: " + e.message;
                             statusText.style.color = "red";
