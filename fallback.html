@@ -7,7 +7,7 @@
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <style>
         body { margin: 0; padding: 0; background-color: #ffffff; overflow: hidden; }
-        model-viewer { width: 10vw; height: 10vh; }
+        model-viewer { width: 100vw; height: 100vh; }
     </style>
 </head>
 <body>
@@ -22,7 +22,8 @@
         ar-modes="scene-viewer webxr quick-look"
         environment-image="neutral"
         shadow-intensity="1"
-        max-camera-orbit="auto auto 10m">
+        camera-orbit="auto auto 150%" 
+        max-camera-orbit="auto auto 250%">
     </model-viewer>
 
     <script>
