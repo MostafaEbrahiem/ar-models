@@ -8,8 +8,18 @@
         body { font-family: sans-serif; background-color: #f4f4f4; padding: 40px; display: flex; justify-content: center; }
         .upload-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
         input[type="file"] { margin: 20px 0; padding: 10px; width: 100%; box-sizing: border-box; }
+        
         button { background-color: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; }
         button:hover { background-color: #0056b3; }
+        
+        /* New styling for the Download QR Button */
+        #downloadQrBtn {
+            background-color: #28a745; 
+            margin-top: 15px; 
+            display: none; /* Hidden until QR code is generated */
+        }
+        #downloadQrBtn:hover { background-color: #218838; }
+
         #status { margin-top: 20px; font-weight: bold; color: #333; }
         #link { margin-top: 10px; font-size: 14px; word-break: break-all; line-height: 1.5; }
     </style>
@@ -26,7 +36,10 @@
         
         <div id="status">Waiting for file...</div>
         <div id="link"></div>
-        <div id="qrcode" style="margin-top: 20px; display: flex; justify-content: center;"></div>
+        
+        <div id="qrcode" style="margin-top: 20px; display: flex; justify-content: center; background: white; padding: 10px;"></div>
+        
+        <button id="downloadQrBtn">Download QR Code (JPG)</button>
     </div>
 
     <script type="module">
@@ -41,8 +54,7 @@
             projectId: "dryclean-307e9",
             storageBucket: "3dmosta1001", 
             messagingSenderId: "1055119275702",
-            appId: "1:1055119275702:web:7d139a70004583b1be9817",
-            measurementId: "G-0CHHNJTK3T"
+            appId: "1:1055119275702:web:7d139a70004583b1be9817"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -53,6 +65,7 @@
         const uploadBtn = document.getElementById('uploadBtn');
         const statusText = document.getElementById('status');
         const linkText = document.getElementById('link');
+        const downloadQrBtn = document.getElementById('downloadQrBtn');
 
         uploadBtn.addEventListener('click', () => {
             const file = fileInput.files[0];
@@ -61,6 +74,10 @@
                 statusText.style.color = "red";
                 return;
             }
+
+            // Hide the download button if they are uploading a second file
+            downloadQrBtn.style.display = 'none';
+            document.getElementById("qrcode").innerHTML = "";
 
             const storageRef = ref(storage, 'models/' + file.name);
             const uploadTask = uploadBytesResumable(storageRef, file);
@@ -88,7 +105,7 @@
                                 createdAt: serverTimestamp()
                             });
 
-                            // Generate the unique link for this specific model
+                            // Generate the unique link
                             const customerLink = `https://mostafaebrahiem.github.io/ar-models/?id=${docRef.id}`;
 
                             statusText.innerText = "Fully Completed!";
@@ -100,12 +117,41 @@
                             `;
 
                             // Draw the QR Code
-                            document.getElementById("qrcode").innerHTML = "";
                             new QRCode(document.getElementById("qrcode"), {
                                 text: customerLink,
-                                width: 150,
-                                height: 150
+                                width: 200, // Made slightly larger for better print quality
+                                height: 200,
+                                colorDark : "#000000",
+                                colorLight : "#ffffff",
+                                correctLevel : QRCode.CorrectLevel.H
                             });
+
+                            // Show the download button
+                            downloadQrBtn.style.display = 'block';
+
+                            // Set up the download logic
+                            downloadQrBtn.onclick = () => {
+                                // Wait a tiny fraction of a second to ensure the canvas is fully drawn
+                                setTimeout(() => {
+                                    const canvas = document.querySelector('#qrcode canvas');
+                                    if (canvas) {
+                                        // Convert the canvas to a JPG image
+                                        const imgURL = canvas.toDataURL("image/jpeg", 1.0);
+                                        
+                                        // Create a fake link to trigger the download
+                                        const dlLink = document.createElement('a');
+                                        // Name the file based on the 3D model's name
+                                        const baseName = file.name.split('.')[0]; 
+                                        dlLink.download = `${baseName}_QRCode.jpg`;
+                                        dlLink.href = imgURL;
+                                        document.body.appendChild(dlLink);
+                                        dlLink.click();
+                                        document.body.removeChild(dlLink);
+                                    } else {
+                                        alert("QR Code is still rendering, please try again in a second.");
+                                    }
+                                }, 100);
+                            };
 
                         } catch (e) {
                             statusText.innerText = "Error saving to database: " + e.message;
