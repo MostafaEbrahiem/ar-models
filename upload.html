@@ -10,7 +10,6 @@
         body { font-family: -apple-system, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; padding: 20px; color: #333; }
         .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
         
-        /* Section Visibility */
         #login-section, #upload-section, #dashboard-section { display: none; }
         
         button { border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; margin-top: 10px; transition: 0.2s; }
@@ -40,18 +39,19 @@
         <div id="upload-section">
             <h2>Upload Your Model</h2>
             <p>You are allowed <b>1 model</b> and <b>3 free scans</b>.</p>
+            <p style="font-size: 14px; color: #666;">Max file size: <b>50MB</b></p>
             <input type="file" id="fileInput" accept=".glb">
             <div id="preview-container">
                 <model-viewer id="local-viewer" auto-rotate camera-controls shadow-intensity="1" environment-image="neutral" autoplay></model-viewer>
             </div>
             <button id="uploadBtn" class="btn-upload">Confirm & Upload</button>
-            <p id="upload-status" style="margin-top:15px;"></p>
+            <p id="upload-status" style="margin-top:15px; font-weight: bold;"></p>
         </div>
 
         <div id="dashboard-section">
             <h2>Your AR Model</h2>
             <div class="stats-box">
-                Scans Used: <span id="scan-count-display">0</span> / 3
+                Scans Used: <span id="scan-count-display">0</span> / <span id="max-scans-display">3</span>
             </div>
             <div id="limit-warning" class="alert" style="display:none;">
                 You have run out of free scans! Contact support to upgrade.
@@ -68,10 +68,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        // NEW: Auth Imports
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
-        // NEW: Firestore queries to check for existing models
         import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -88,14 +86,13 @@
         const storage = getStorage(app);
         const db = getFirestore(app);
 
-        // UI Elements
         const loginSec = document.getElementById('login-section');
         const uploadSec = document.getElementById('upload-section');
         const dashSec = document.getElementById('dashboard-section');
+        const statusText = document.getElementById('upload-status');
         
         let currentUser = null;
 
-        // --- AUTHENTICATION LOGIC ---
         document.getElementById('loginBtn').addEventListener('click', () => {
             signInWithPopup(auth, new GoogleAuthProvider()).catch(err => alert("Login Failed: " + err.message));
         });
@@ -104,7 +101,6 @@
             signOut(auth).then(() => location.reload());
         });
 
-        // Listen for Login State changes
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
@@ -117,13 +113,11 @@
             }
         });
 
-        // --- DATABASE CHECK ---
         async function checkUserModels(uid) {
             const q = query(collection(db, "clients"), where("uid", "==", uid));
             const querySnapshot = await getDocs(q);
 
             if (!querySnapshot.empty) {
-                // User ALREADY has a model. Show Dashboard.
                 const userDoc = querySnapshot.docs[0];
                 const data = userDoc.data();
                 const docId = userDoc.id;
@@ -131,9 +125,11 @@
                 uploadSec.style.display = 'none';
                 dashSec.style.display = 'block';
                 
+                const maxScans = data.maxScans || 3;
                 document.getElementById('scan-count-display').innerText = data.scanCount || 0;
+                document.getElementById('max-scans-display').innerText = maxScans;
                 
-                if ((data.scanCount || 0) >= 3) {
+                if ((data.scanCount || 0) >= maxScans) {
                     document.getElementById('limit-warning').style.display = 'block';
                 }
 
@@ -145,24 +141,45 @@
                 new QRCode(document.getElementById("qrcode"), { text: clientLink, width: 150, height: 150 });
 
             } else {
-                // User is new. Show Upload Screen.
                 dashSec.style.display = 'none';
                 uploadSec.style.display = 'block';
             }
         }
 
-        // --- UPLOAD LOGIC ---
         const fileInput = document.getElementById('fileInput');
         const uploadBtn = document.getElementById('uploadBtn');
-        const statusText = document.getElementById('upload-status');
+        const previewContainer = document.getElementById('preview-container');
         const localViewer = document.getElementById('local-viewer');
+        
+        // Define the maximum size in bytes (50MB)
+        const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
         fileInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
+            
+            // Clear any old error messages
+            statusText.innerText = "";
+            
             if (file) {
+                // THE GATEKEEPER: Check if the file is over 50MB
+                if (file.size > MAX_FILE_SIZE) {
+                    statusText.innerText = "Error: File is too large! Maximum allowed size is 50MB.";
+                    statusText.style.color = "red";
+                    
+                    // Reset the input and hide the preview/upload buttons
+                    fileInput.value = ""; 
+                    previewContainer.style.display = 'none';
+                    uploadBtn.style.display = 'none';
+                    return; // Stop right here
+                }
+
+                // If it passes the test, show the 3D preview
                 localViewer.setAttribute('src', URL.createObjectURL(file));
-                document.getElementById('preview-container').style.display = 'block';
+                previewContainer.style.display = 'block';
                 uploadBtn.style.display = 'block';
+            } else {
+                previewContainer.style.display = 'none';
+                uploadBtn.style.display = 'none';
             }
         });
 
@@ -172,25 +189,29 @@
 
             uploadBtn.disabled = true;
             statusText.innerText = "Uploading... Please wait.";
+            statusText.style.color = "#007bff";
 
             const storageRef = ref(storage, 'models/' + currentUser.uid + '_' + file.name);
             const uploadTask = uploadBytesResumable(storageRef, file);
 
             uploadTask.on('state_changed', null, 
-                (error) => { statusText.innerText = "Upload failed: " + error.message; }, 
+                (error) => { 
+                    statusText.innerText = "Upload failed: " + error.message; 
+                    statusText.style.color = "red";
+                    uploadBtn.disabled = false;
+                }, 
                 () => {
                     getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
                         statusText.innerText = "Saving profile...";
                         await addDoc(collection(db, "clients"), {
-                            uid: currentUser.uid,          // Tie to this exact user
-                            userEmail: currentUser.email,  // Save email for your admin records
+                            uid: currentUser.uid,          
+                            userEmail: currentUser.email,  
                             fileName: file.name,
                             modelUrl: downloadURL,
                             scanCount: 0,
-                            maxScans: 3,                   // The hard limit
+                            maxScans: 3,                   
                             createdAt: serverTimestamp()
                         });
-                        // Reload to show the dashboard
                         location.reload();
                     });
                 }
