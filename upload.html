@@ -68,7 +68,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        // Note: Using signInWithRedirect to avoid popup blocker issues
+        import { getAuth, signInWithRedirect, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
         import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
@@ -93,14 +94,16 @@
         
         let currentUser = null;
 
+        // Redirect Login Trigger
         document.getElementById('loginBtn').addEventListener('click', () => {
-            signInWithPopup(auth, new GoogleAuthProvider()).catch(err => alert("Login Failed: " + err.message));
+            signInWithRedirect(auth, new GoogleAuthProvider());
         });
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
             signOut(auth).then(() => location.reload());
         });
 
+        // Listen for Authentication State
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
@@ -151,29 +154,23 @@
         const previewContainer = document.getElementById('preview-container');
         const localViewer = document.getElementById('local-viewer');
         
-        // Define the maximum size in bytes (50MB)
+        // 50MB Limit
         const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
         fileInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
-            
-            // Clear any old error messages
             statusText.innerText = "";
             
             if (file) {
-                // THE GATEKEEPER: Check if the file is over 50MB
                 if (file.size > MAX_FILE_SIZE) {
                     statusText.innerText = "Error: File is too large! Maximum allowed size is 50MB.";
                     statusText.style.color = "red";
-                    
-                    // Reset the input and hide the preview/upload buttons
                     fileInput.value = ""; 
                     previewContainer.style.display = 'none';
                     uploadBtn.style.display = 'none';
-                    return; // Stop right here
+                    return; 
                 }
 
-                // If it passes the test, show the 3D preview
                 localViewer.setAttribute('src', URL.createObjectURL(file));
                 previewContainer.style.display = 'block';
                 uploadBtn.style.display = 'block';
