@@ -25,13 +25,19 @@
         tr:hover { background-color: #f8f9fa; }
         
         .scan-badge { background: #28a745; color: white; padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 14px; }
-        .link-btn { background: #e9ecef; color: #333; text-decoration: none; padding: 6px 12px; border-radius: 5px; font-size: 14px; transition: 0.2s; }
+        
+        /* Button Styling */
+        .action-buttons { display: flex; gap: 10px; align-items: center; }
+        .link-btn { background: #e9ecef; color: #333; text-decoration: none; padding: 6px 12px; border-radius: 5px; font-size: 14px; transition: 0.2s; border: none; cursor: pointer; }
         .link-btn:hover { background: #ced4da; }
+        .delete-btn { background: #dc3545; color: white; }
+        .delete-btn:hover { background: #c82333; }
         
         /* Mobile adjustments */
         @media (max-width: 600px) {
             .stats-container { flex-direction: column; }
             th, td { padding: 10px; }
+            .action-buttons { flex-direction: column; align-items: flex-start; }
         }
     </style>
 </head>
@@ -74,7 +80,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        // Added 'deleteDoc' and 'doc' to the imports so we can delete records
+        import { getFirestore, collection, getDocs, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         // Your exact Firebase Keys
         const firebaseConfig = {
@@ -89,60 +96,111 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // Making variables global so we can update them when a file is deleted
+        let totalModelsCount = 0;
+        let totalScansCount = 0;
+
         async function loadDashboardData() {
             const tableBody = document.getElementById('table-body');
             const totalModelsEl = document.getElementById('total-models');
             const totalScansEl = document.getElementById('total-scans');
 
             try {
-                // Query the database, ordering by the newest uploads first
                 const q = query(collection(db, "clients"), orderBy("createdAt", "desc"));
                 const querySnapshot = await getDocs(q);
                 
-                tableBody.innerHTML = ''; // Clear the loading text
-                
-                let totalModels = 0;
-                let totalScans = 0;
+                tableBody.innerHTML = ''; 
+                totalModelsCount = 0;
+                totalScansCount = 0;
 
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const docId = doc.id;
+                if (querySnapshot.empty) {
+                    tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No models uploaded yet.</td></tr>';
+                    return;
+                }
+
+                querySnapshot.forEach((documentSnapshot) => {
+                    const data = documentSnapshot.data();
+                    const docId = documentSnapshot.id;
+                    const scans = data.scanCount || 0;
                     
-                    // Add to our running totals
-                    totalModels++;
-                    totalScans += (data.scanCount || 0);
+                    totalModelsCount++;
+                    totalScansCount += scans;
 
-                    // Clean up the filename for display (remove .glb)
                     const displayName = data.fileName ? data.fileName.replace('.glb', '') : 'Unnamed Model';
-                    
-                    // Create the client AR link so you can easily test it
                     const clientLink = `https://mostafaebrahiem.github.io/ar-models/?id=${docId}`;
 
-                    // Build the table row
                     const tr = document.createElement('tr');
+                    tr.id = `row-${docId}`; // Give the row an ID so we can remove it easily
+                    
                     tr.innerHTML = `
                         <td><strong>${displayName}</strong></td>
-                        <td><span class="scan-badge">${data.scanCount || 0}</span></td>
+                        <td><span class="scan-badge">${scans}</span></td>
                         <td>
-                            <a href="${clientLink}" target="_blank" class="link-btn">View Live</a>
+                            <div class="action-buttons">
+                                <a href="${clientLink}" target="_blank" class="link-btn">View Live</a>
+                                <button class="link-btn delete-btn" data-id="${docId}" data-name="${displayName}" data-scans="${scans}">Delete</button>
+                            </div>
                         </td>
                     `;
                     tableBody.appendChild(tr);
                 });
 
-                // Update the big numbers at the top
-                totalModelsEl.innerText = totalModels;
-                totalScansEl.innerText = totalScans;
+                // Update the stats at the top
+                totalModelsEl.innerText = totalModelsCount;
+                totalScansEl.innerText = totalScansCount;
 
-                // Handle case where database is totally empty
-                if (totalModels === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No models uploaded yet.</td></tr>';
-                }
+                // Attach delete logic to all the new delete buttons
+                attachDeleteListeners();
 
             } catch (error) {
                 console.error("Error loading data: ", error);
                 tableBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: red;">Error loading data. Check console.</td></tr>`;
             }
+        }
+
+        function attachDeleteListeners() {
+            const deleteButtons = document.querySelectorAll('.delete-btn');
+            
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const docId = e.target.getAttribute('data-id');
+                    const modelName = e.target.getAttribute('data-name');
+                    const scans = parseInt(e.target.getAttribute('data-scans'));
+
+                    // Ask for confirmation before deleting
+                    const isConfirmed = confirm(`Are you sure you want to delete "${modelName}"? This will deactivate the QR code.`);
+                    
+                    if (isConfirmed) {
+                        e.target.innerText = "Deleting...";
+                        e.target.style.opacity = "0.5";
+                        
+                        try {
+                            // 1. Delete the record from Firebase Firestore
+                            await deleteDoc(doc(db, "clients", docId));
+                            
+                            // 2. Remove the row from the table instantly
+                            document.getElementById(`row-${docId}`).remove();
+                            
+                            // 3. Update the big numbers at the top
+                            totalModelsCount--;
+                            totalScansCount -= scans;
+                            document.getElementById('total-models').innerText = totalModelsCount;
+                            document.getElementById('total-scans').innerText = totalScansCount;
+
+                            // 4. If table is empty, show empty message
+                            if (totalModelsCount === 0) {
+                                document.getElementById('table-body').innerHTML = '<tr><td colspan="3" style="text-align: center;">No models uploaded yet.</td></tr>';
+                            }
+                            
+                        } catch (error) {
+                            console.error("Error deleting document: ", error);
+                            alert("Failed to delete the model. Please check your connection.");
+                            e.target.innerText = "Delete";
+                            e.target.style.opacity = "1";
+                        }
+                    }
+                });
+            });
         }
 
         // Run the function when the page loads
