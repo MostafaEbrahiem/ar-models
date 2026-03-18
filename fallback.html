@@ -9,8 +9,8 @@
         body { margin: 0; padding: 0; background-color: #ffffff; overflow: hidden; }
         model-viewer { width: 100vw; height: 100vh; }
 
-        /* Custom styling for the new AR button */
-        #ar-button {
+        /* Custom styling for our new "Smart" AR button */
+        #smart-ar-button {
             background-color: #007bff;
             color: white;
             border-radius: 30px;
@@ -27,13 +27,9 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            z-index: 1000; /* Ensures it stays on top of the 3D model */
         }
-        #ar-button:active { background-color: #0056b3; }
-
-        /* If the phone does not support AR (like Huawei), hide this button */
-        model-viewer[ar-status="not-presenting"] #ar-button[data-visibility="hidden"] {
-            display: none;
-        }
+        #smart-ar-button:hover { background-color: #0056b3; }
     </style>
 </head>
 <body>
@@ -50,25 +46,44 @@
         shadow-intensity="1"
         camera-orbit="auto auto 500%" 
         max-camera-orbit="auto auto 1000%">
-        
-        <button slot="ar-button" id="ar-button">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/><path d="m19 12-4-2M5 12l4 2M12 5v4M12 15v4"/></svg>
-            View in your room
-        </button>
-        
     </model-viewer>
+
+    <button id="smart-ar-button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/><path d="m19 12-4-2M5 12l4 2M12 5v4M12 15v4"/></svg>
+        View in your room
+    </button>
 
     <script>
         // Grab the Firebase model URL from the web address
         const urlParams = new URLSearchParams(window.location.search);
         const modelUrl = urlParams.get('model');
+        const viewer = document.getElementById('viewer');
         
         // Inject that URL into the 3D viewer
         if(modelUrl) {
-            document.getElementById('viewer').setAttribute('src', modelUrl);
+            viewer.setAttribute('src', modelUrl);
         } else {
             alert("No 3D model found to display!");
         }
+
+        // The "Brain" for the Smart AR Button
+        document.getElementById('smart-ar-button').addEventListener('click', () => {
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            
+            // Detect if the brand is Huawei or Honor
+            const isHuaweiOrHonor = /huawei|honor|hms/i.test(userAgent);
+            
+            // If it is a Huawei/Honor OR if the browser explicitly says it cannot do native AR
+            if (isHuaweiOrHonor || viewer.canActivateAR === false) {
+                
+                // IMPORTANT: Make sure 'tracking.html' matches the actual name of your Image Tracking file!
+                window.location.href = `tracking.html?model=${encodeURIComponent(modelUrl)}`;
+                
+            } else {
+                // For iPhones, Samsungs, Pixels, etc. -> Launch native Google/Apple AR
+                viewer.activateAR();
+            }
+        });
     </script>
 </body>
 </html>
