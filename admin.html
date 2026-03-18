@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Admin Dashboard</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        /* Header and Stats Styling */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        h1 { margin: 0; font-size: 24px; color: #2c3e50; }
+        .stats-container { display: flex; gap: 15px; width: 100%; }
+        .stat-card { background: #007bff; color: white; padding: 20px; border-radius: 10px; flex: 1; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .stat-card h3 { margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
+        .stat-card p { margin: 0; font-size: 28px; font-weight: bold; }
+        .stat-card.dark { background: #2c3e50; }
+
+        /* Table Styling */
+        .table-wrapper { background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background-color: #f8f9fa; padding: 15px; border-bottom: 2px solid #e9ecef; color: #495057; }
+        td { padding: 15px; border-bottom: 1px solid #e9ecef; vertical-align: middle; }
+        tr:hover { background-color: #f8f9fa; }
+        
+        .scan-badge { background: #28a745; color: white; padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 14px; }
+        .link-btn { background: #e9ecef; color: #333; text-decoration: none; padding: 6px 12px; border-radius: 5px; font-size: 14px; transition: 0.2s; }
+        .link-btn:hover { background: #ced4da; }
+        
+        /* Mobile adjustments */
+        @media (max-width: 600px) {
+            .stats-container { flex-direction: column; }
+            th, td { padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Platform Dashboard</h1>
+            <a href="upload.html" class="link-btn" style="background: #007bff; color: white;">+ Upload New Model</a>
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-card">
+                <h3>Total Models</h3>
+                <p id="total-models">0</p>
+            </div>
+            <div class="stat-card dark">
+                <h3>Total Scans</h3>
+                <p id="total-scans">0</p>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Model Name</th>
+                        <th>Total Scans</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <tr>
+                        <td colspan="3" style="text-align: center;">Loading data from database...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // Your exact Firebase Keys
+        const firebaseConfig = {
+            apiKey: "AIzaSyDCAHxbic6CnLgieNd6vr0UKtByIX9XI-0",
+            authDomain: "dryclean-307e9.firebaseapp.com",
+            projectId: "dryclean-307e9",
+            storageBucket: "3dmosta1001", 
+            messagingSenderId: "1055119275702",
+            appId: "1:1055119275702:web:7d139a70004583b1be9817"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function loadDashboardData() {
+            const tableBody = document.getElementById('table-body');
+            const totalModelsEl = document.getElementById('total-models');
+            const totalScansEl = document.getElementById('total-scans');
+
+            try {
+                // Query the database, ordering by the newest uploads first
+                const q = query(collection(db, "clients"), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+                
+                tableBody.innerHTML = ''; // Clear the loading text
+                
+                let totalModels = 0;
+                let totalScans = 0;
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const docId = doc.id;
+                    
+                    // Add to our running totals
+                    totalModels++;
+                    totalScans += (data.scanCount || 0);
+
+                    // Clean up the filename for display (remove .glb)
+                    const displayName = data.fileName ? data.fileName.replace('.glb', '') : 'Unnamed Model';
+                    
+                    // Create the client AR link so you can easily test it
+                    const clientLink = `https://mostafaebrahiem.github.io/ar-models/?id=${docId}`;
+
+                    // Build the table row
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${displayName}</strong></td>
+                        <td><span class="scan-badge">${data.scanCount || 0}</span></td>
+                        <td>
+                            <a href="${clientLink}" target="_blank" class="link-btn">View Live</a>
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+
+                // Update the big numbers at the top
+                totalModelsEl.innerText = totalModels;
+                totalScansEl.innerText = totalScans;
+
+                // Handle case where database is totally empty
+                if (totalModels === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No models uploaded yet.</td></tr>';
+                }
+
+            } catch (error) {
+                console.error("Error loading data: ", error);
+                tableBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: red;">Error loading data. Check console.</td></tr>`;
+            }
+        }
+
+        // Run the function when the page loads
+        loadDashboardData();
+    </script>
+</body>
+</html>
