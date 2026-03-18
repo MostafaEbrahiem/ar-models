@@ -3,77 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Model Uploader</title>
+    <title>Creator Dashboard</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
-    <style>
-        body { font-family: sans-serif; background-color: #f4f4f4; padding: 20px; display: flex; justify-content: center; }
-        .upload-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
-        input[type="file"] { margin: 20px 0; padding: 10px; width: 100%; box-sizing: border-box; }
-        
-        /* Styling for the new Preview Box */
-        #preview-container { 
-            display: none; /* Hidden until a file is chosen */
-            margin-top: 15px; 
-            margin-bottom: 20px; 
-            border: 2px dashed #ccc; 
-            border-radius: 8px; 
-            overflow: hidden; 
-            background: #fafafa; 
-        }
-        /* Make the preview viewer a nice size */
-        model-viewer { width: 100%; height: 300px; }
-
-        button { background-color: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; margin-top: 10px; }
-        button:hover { background-color: #0056b3; }
-        
-        /* The Confirm Upload Button */
-        #uploadBtn { display: none; background-color: #28a745; font-weight: bold; }
-        #uploadBtn:hover { background-color: #218838; }
-
-        /* The QR Download Button */
-        #downloadQrBtn { background-color: #17a2b8; display: none; margin-top: 15px; }
-        #downloadQrBtn:hover { background-color: #138496; }
-
-        #status { margin-top: 20px; font-weight: bold; color: #333; }
-        #link { margin-top: 10px; font-size: 14px; word-break: break-all; line-height: 1.5; }
-    </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: -apple-system, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; padding: 20px; color: #333; }
+        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
+        
+        /* Section Visibility */
+        #login-section, #upload-section, #dashboard-section { display: none; }
+        
+        button { border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; margin-top: 10px; transition: 0.2s; }
+        .btn-google { background-color: #4285F4; color: white; }
+        .btn-google:hover { background-color: #3367D6; }
+        .btn-upload { background-color: #28a745; color: white; display: none; }
+        .btn-logout { background-color: #dc3545; color: white; margin-top: 20px; }
+        
+        input[type="file"] { margin: 20px 0; padding: 10px; width: 100%; box-sizing: border-box; }
+        #preview-container { display: none; margin: 15px 0; border: 2px dashed #ccc; border-radius: 8px; overflow: hidden; background: #fafafa; }
+        model-viewer { width: 100%; height: 300px; }
+        
+        .stats-box { background: #e9ecef; padding: 15px; border-radius: 8px; margin: 20px 0; font-size: 18px; }
+        .alert { color: #dc3545; font-weight: bold; }
+    </style>
 </head>
 <body>
 
-    <div class="upload-card">
-        <h2>Upload 3D Model</h2>
-        <p>Select a <b>.glb</b> file to preview and upload.</p>
+    <div class="card">
         
-        <input type="file" id="fileInput" accept=".glb">
-        
-        <div id="preview-container">
-            <model-viewer 
-                id="local-viewer" 
-                auto-rotate 
-                camera-controls 
-                shadow-intensity="1" 
-                environment-image="neutral"
-                autoplay>
-            </model-viewer>
+        <div id="login-section">
+            <h2>Welcome to AR Platform</h2>
+            <p>Sign in to upload and manage your 3D model.</p>
+            <button id="loginBtn" class="btn-google">Sign in with Google</button>
         </div>
 
-        <button id="uploadBtn">Confirm & Upload to Cloud</button>
-        
-        <div id="status">Waiting for file...</div>
-        <div id="link"></div>
-        
-        <div id="qrcode" style="margin-top: 20px; display: flex; justify-content: center; background: white; padding: 10px;"></div>
-        
-        <button id="downloadQrBtn">Download QR Code (JPG)</button>
+        <div id="upload-section">
+            <h2>Upload Your Model</h2>
+            <p>You are allowed <b>1 model</b> and <b>3 free scans</b>.</p>
+            <input type="file" id="fileInput" accept=".glb">
+            <div id="preview-container">
+                <model-viewer id="local-viewer" auto-rotate camera-controls shadow-intensity="1" environment-image="neutral" autoplay></model-viewer>
+            </div>
+            <button id="uploadBtn" class="btn-upload">Confirm & Upload</button>
+            <p id="upload-status" style="margin-top:15px;"></p>
+        </div>
+
+        <div id="dashboard-section">
+            <h2>Your AR Model</h2>
+            <div class="stats-box">
+                Scans Used: <span id="scan-count-display">0</span> / 3
+            </div>
+            <div id="limit-warning" class="alert" style="display:none;">
+                You have run out of free scans! Contact support to upgrade.
+            </div>
+            
+            <p style="margin-top: 20px;"><b>Your QR Code:</b></p>
+            <div id="qrcode" style="display: flex; justify-content: center; margin: 15px 0;"></div>
+            <a id="client-link-display" href="#" target="_blank" style="color: #007bff; word-break: break-all;"></a>
+            
+            <button id="logoutBtn" class="btn-logout">Sign Out</button>
+        </div>
+
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        // NEW: Auth Imports
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        // NEW: Firestore queries to check for existing models
+        import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // Your exact Firebase Keys
         const firebaseConfig = {
             apiKey: "AIzaSyDCAHxbic6CnLgieNd6vr0UKtByIX9XI-0",
             authDomain: "dryclean-307e9.firebaseapp.com",
@@ -84,133 +84,114 @@
         };
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const storage = getStorage(app);
         const db = getFirestore(app);
 
-        const fileInput = document.getElementById('fileInput');
-        const previewContainer = document.getElementById('preview-container');
-        const localViewer = document.getElementById('local-viewer');
-        const uploadBtn = document.getElementById('uploadBtn');
-        const statusText = document.getElementById('status');
-        const linkText = document.getElementById('link');
-        const downloadQrBtn = document.getElementById('downloadQrBtn');
+        // UI Elements
+        const loginSec = document.getElementById('login-section');
+        const uploadSec = document.getElementById('upload-section');
+        const dashSec = document.getElementById('dashboard-section');
+        
+        let currentUser = null;
 
-        // STEP 1: Handle Local File Selection & Preview
-        fileInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            
-            if (file) {
-                // Instantly load the file from the computer's memory
-                const localUrl = URL.createObjectURL(file);
-                
-                // Show the model in the preview box
-                localViewer.setAttribute('src', localUrl);
-                previewContainer.style.display = 'block';
-                
-                // Reveal the green Confirm Upload button
-                uploadBtn.style.display = 'block';
-                statusText.innerText = "Model preview ready. Review it before uploading.";
-                statusText.style.color = "#333";
-                
-                // Hide old UI elements in case they upload a second file
-                linkText.innerHTML = "";
-                document.getElementById("qrcode").innerHTML = "";
-                downloadQrBtn.style.display = 'none';
+        // --- AUTHENTICATION LOGIC ---
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            signInWithPopup(auth, new GoogleAuthProvider()).catch(err => alert("Login Failed: " + err.message));
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            signOut(auth).then(() => location.reload());
+        });
+
+        // Listen for Login State changes
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                loginSec.style.display = 'none';
+                checkUserModels(user.uid);
             } else {
-                // If they cancel file selection, hide everything
-                previewContainer.style.display = 'none';
-                uploadBtn.style.display = 'none';
+                loginSec.style.display = 'block';
+                uploadSec.style.display = 'none';
+                dashSec.style.display = 'none';
             }
         });
 
-        // STEP 2: Handle the Cloud Upload when Confirm is Clicked
+        // --- DATABASE CHECK ---
+        async function checkUserModels(uid) {
+            const q = query(collection(db, "clients"), where("uid", "==", uid));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                // User ALREADY has a model. Show Dashboard.
+                const userDoc = querySnapshot.docs[0];
+                const data = userDoc.data();
+                const docId = userDoc.id;
+                
+                uploadSec.style.display = 'none';
+                dashSec.style.display = 'block';
+                
+                document.getElementById('scan-count-display').innerText = data.scanCount || 0;
+                
+                if ((data.scanCount || 0) >= 3) {
+                    document.getElementById('limit-warning').style.display = 'block';
+                }
+
+                const clientLink = `https://mostafaebrahiem.github.io/ar-models/?id=${docId}`;
+                document.getElementById('client-link-display').href = clientLink;
+                document.getElementById('client-link-display').innerText = clientLink;
+
+                document.getElementById("qrcode").innerHTML = "";
+                new QRCode(document.getElementById("qrcode"), { text: clientLink, width: 150, height: 150 });
+
+            } else {
+                // User is new. Show Upload Screen.
+                dashSec.style.display = 'none';
+                uploadSec.style.display = 'block';
+            }
+        }
+
+        // --- UPLOAD LOGIC ---
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const statusText = document.getElementById('upload-status');
+        const localViewer = document.getElementById('local-viewer');
+
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                localViewer.setAttribute('src', URL.createObjectURL(file));
+                document.getElementById('preview-container').style.display = 'block';
+                uploadBtn.style.display = 'block';
+            }
+        });
+
         uploadBtn.addEventListener('click', () => {
             const file = fileInput.files[0];
-            if (!file) return;
+            if (!file || !currentUser) return;
 
-            // Lock the button so they don't click it twice
             uploadBtn.disabled = true;
-            uploadBtn.innerText = "Uploading to Cloud...";
+            statusText.innerText = "Uploading... Please wait.";
 
-            const storageRef = ref(storage, 'models/' + file.name);
+            const storageRef = ref(storage, 'models/' + currentUser.uid + '_' + file.name);
             const uploadTask = uploadBytesResumable(storageRef, file);
 
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    statusText.innerText = 'Uploading... ' + Math.round(progress) + '%';
-                    statusText.style.color = "#007bff";
-                }, 
-                (error) => {
-                    statusText.innerText = "Upload failed: " + error.message;
-                    statusText.style.color = "red";
-                    uploadBtn.disabled = false;
-                    uploadBtn.innerText = "Confirm & Upload to Cloud";
-                }, 
+            uploadTask.on('state_changed', null, 
+                (error) => { statusText.innerText = "Upload failed: " + error.message; }, 
                 () => {
                     getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
-                        statusText.innerText = "Saving to Database...";
-                        
-                        try {
-                            const docRef = await addDoc(collection(db, "clients"), {
-                                fileName: file.name,
-                                modelUrl: downloadURL,
-                                scanCount: 0, 
-                                createdAt: serverTimestamp()
-                            });
-
-                            const customerLink = `https://mostafaebrahiem.github.io/ar-models/?id=${docRef.id}`;
-
-                            statusText.innerText = "Fully Completed!";
-                            statusText.style.color = "green";
-                            linkText.innerHTML = `
-                                <b>Success! Record Saved.</b><br><br>
-                                <b>Customer Link:</b><br>
-                                <a href="${customerLink}" target="_blank">${customerLink}</a>
-                            `;
-
-                            // Generate QR Code
-                            new QRCode(document.getElementById("qrcode"), {
-                                text: customerLink,
-                                width: 200,
-                                height: 200,
-                                colorDark : "#000000",
-                                colorLight : "#ffffff",
-                                correctLevel : QRCode.CorrectLevel.H
-                            });
-
-                            // Final UI Cleanup
-                            downloadQrBtn.style.display = 'block';
-                            uploadBtn.style.display = 'none'; // Hide the upload button now that it's done
-                            uploadBtn.disabled = false;
-                            uploadBtn.innerText = "Confirm & Upload to Cloud";
-                            
-                            // Free up the browser memory used by the local preview
-                            URL.revokeObjectURL(localViewer.getAttribute('src'));
-
-                            // Handle QR Download
-                            downloadQrBtn.onclick = () => {
-                                setTimeout(() => {
-                                    const canvas = document.querySelector('#qrcode canvas');
-                                    if (canvas) {
-                                        const imgURL = canvas.toDataURL("image/jpeg", 1.0);
-                                        const dlLink = document.createElement('a');
-                                        const baseName = file.name.split('.')[0]; 
-                                        dlLink.download = `${baseName}_QRCode.jpg`;
-                                        dlLink.href = imgURL;
-                                        document.body.appendChild(dlLink);
-                                        dlLink.click();
-                                        document.body.removeChild(dlLink);
-                                    }
-                                }, 100);
-                            };
-
-                        } catch (e) {
-                            statusText.innerText = "Error saving to database: " + e.message;
-                            statusText.style.color = "red";
-                            uploadBtn.disabled = false;
-                            uploadBtn.innerText = "Confirm & Upload to Cloud";
-                        }
+                        statusText.innerText = "Saving profile...";
+                        await addDoc(collection(db, "clients"), {
+                            uid: currentUser.uid,          // Tie to this exact user
+                            userEmail: currentUser.email,  // Save email for your admin records
+                            fileName: file.name,
+                            modelUrl: downloadURL,
+                            scanCount: 0,
+                            maxScans: 3,                   // The hard limit
+                            createdAt: serverTimestamp()
+                        });
+                        // Reload to show the dashboard
+                        location.reload();
                     });
                 }
             );

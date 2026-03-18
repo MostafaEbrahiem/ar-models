@@ -4,16 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loading AR...</title>
+    <style>
+        body { text-align: center; font-family: sans-serif; margin-top: 50px; background-color: #f4f4f4; color: #333; }
+        .error-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block; max-width: 400px; }
+        h2 { color: #dc3545; }
+    </style>
 </head>
-<body style="text-align: center; font-family: sans-serif; margin-top: 50px; background-color: #f4f4f4;">
-    <h2>Opening 3D Experience...</h2>
-    <p>Please wait a moment.</p>
-
+<body>
+    <h2 id="loading-text" style="color: #333;">Opening 3D Experience...</h2>
+    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // Your Exact Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyDCAHxbic6CnLgieNd6vr0UKtByIX9XI-0",
             authDomain: "dryclean-307e9.firebaseapp.com",
@@ -31,7 +34,7 @@
             const clientId = urlParams.get('id');
 
             if (!clientId) {
-                document.body.innerHTML = "<h2>Error: Invalid QR Code.</h2><p>No ID found in the link.</p>";
+                document.body.innerHTML = "<div class='error-card'><h2>Invalid Code</h2><p>No model ID found.</p></div>";
                 return;
             }
 
@@ -41,21 +44,34 @@
 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    const modelUrl = data.modelUrl;
+                    const scans = data.scanCount || 0;
+                    const maxScans = data.maxScans || 3; // Defaults to 3 if missing
 
-                    // Add +1 to the scan count
+                    // THE BOUNCER: Check if they are out of credits
+                    if (scans >= maxScans) {
+                        document.body.innerHTML = `
+                            <div class='error-card'>
+                                <h2>Scan Limit Reached</h2>
+                                <p>This 3D model has used all ${maxScans} of its free views.</p>
+                                <p>Please ask the owner to upgrade their account.</p>
+                            </div>
+                        `;
+                        return; // Stop the code here. Do not load the model.
+                    }
+
+                    // If they have credits, add +1 to the scan count
                     await updateDoc(docRef, { scanCount: increment(1) });
 
-                    // NEW LOGIC: Send EVERYONE directly to the 3D Viewer (fallback.html)
-                    const safeModelUrl = encodeURIComponent(modelUrl);
+                    // Send them to the universal fallback viewer
+                    const safeModelUrl = encodeURIComponent(data.modelUrl);
                     window.location.href = `https://mostafaebrahiem.github.io/ar-models/fallback.html?model=${safeModelUrl}`;
 
                 } else {
-                    document.body.innerHTML = "<h2>Error: 3D Model not found in database.</h2>";
+                    document.body.innerHTML = "<div class='error-card'><h2>Not Found</h2><p>This 3D model was deleted or does not exist.</p></div>";
                 }
             } catch (error) {
                 console.error("Database error:", error);
-                document.body.innerHTML = "<h2>Error connecting to server.</h2>";
+                document.body.innerHTML = "<div class='error-card'><h2>Connection Error</h2><p>Could not connect to the server.</p></div>";
             }
         }
 
