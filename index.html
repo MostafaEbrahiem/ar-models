@@ -6,7 +6,7 @@
     <title>Loading AR...</title>
 </head>
 <body style="text-align: center; font-family: sans-serif; margin-top: 50px; background-color: #f4f4f4;">
-    <h2>Opening AR Experience...</h2>
+    <h2>Opening 3D Experience...</h2>
     <p>Please wait a moment.</p>
 
     <script type="module">
@@ -46,17 +46,9 @@
                     // Add +1 to the scan count
                     await updateDoc(docRef, { scanCount: increment(1) });
 
-                    const fallbackUrl = `https://mostafaebrahiem.github.io/ar-models/fallback.html?model=${encodeURIComponent(modelUrl)}`;
-                    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-
-                    if (/android/i.test(userAgent)) {
-                        // FIX: Safely encode the Firebase URL so Android doesn't delete the security token!
-                        const safeModelUrl = encodeURIComponent(modelUrl);
-                        
-                        window.location.href = `intent://arvr.google.com/scene-viewer/1.0?file=${safeModelUrl}&mode=ar_only#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(fallbackUrl)};end;`;
-                    } else {
-                        window.location.href = fallbackUrl;
-                    }
+                    // NEW LOGIC: Send EVERYONE directly to the 3D Viewer (fallback.html)
+                    const safeModelUrl = encodeURIComponent(modelUrl);
+                    window.location.href = `https://mostafaebrahiem.github.io/ar-models/fallback.html?model=${safeModelUrl}`;
 
                 } else {
                     document.body.innerHTML = "<h2>Error: 3D Model not found in database.</h2>";
