@@ -8,51 +8,6 @@
     <style>
         body { margin: 0; padding: 0; background-color: #ffffff; overflow: hidden; }
         model-viewer { width: 100vw; height: 100vh; }
-        
-        /* Hides the default Google AR button so it doesn't conflict with ours */
-        model-viewer::part(default-ar-button) { display: none; }
-
-        /* Container for our custom buttons */
-        #ar-controls {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-            width: 100%;
-            z-index: 1000;
-        }
-
-        /* Custom styling for our new "Smart" AR button */
-        #smart-ar-button {
-            background-color: #007bff;
-            color: white;
-            border-radius: 30px;
-            border: none;
-            padding: 15px 30px;
-            font-size: 16px;
-            font-weight: bold;
-            box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-        #smart-ar-button:hover { background-color: #0056b3; }
-        
-        /* Styling for the manual fallback link */
-        #force-tracking-link {
-            color: #007bff;
-            font-family: sans-serif;
-            font-size: 14px;
-            text-decoration: underline;
-            margin-top: 15px;
-            display: inline-block;
-            cursor: pointer;
-            background: rgba(255,255,255,0.8);
-            padding: 5px 10px;
-            border-radius: 5px;
-        }
     </style>
 </head>
 <body>
@@ -63,54 +18,24 @@
         auto-rotate 
         camera-controls
         autoplay
-        ar
-        ar-modes="scene-viewer webxr quick-look"
         environment-image="neutral"
         shadow-intensity="1"
-        camera-orbit="auto auto 110%" 
-        max-camera-orbit="auto auto 130%">
+        camera-orbit="auto auto 500%" 
+        max-camera-orbit="auto auto 1000%">
     </model-viewer>
 
-    <div id="ar-controls">
-        <button id="smart-ar-button">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/><path d="m19 12-4-2M5 12l4 2M12 5v4M12 15v4"/></svg>
-            View in your room
-        </button>
-        <br>
-        <a id="force-tracking-link">Phone asks for Google AR? Click here.</a>
-    </div>
-
     <script>
+        // Grab the Firebase model URL from the web address
         const urlParams = new URLSearchParams(window.location.search);
         const modelUrl = urlParams.get('model');
         const viewer = document.getElementById('viewer');
-        const trackingUrl = `tracking.html?model=${encodeURIComponent(modelUrl)}`;
         
+        // Inject that URL into the 3D viewer
         if(modelUrl) {
             viewer.setAttribute('src', modelUrl);
         } else {
             alert("No 3D model found to display!");
         }
-
-        // The "Brain" for the Smart AR Button
-        document.getElementById('smart-ar-button').addEventListener('click', () => {
-            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-            
-            // Expanded regex to catch Nova, Mate, and other sneaky Huawei device codes
-            const isHuaweiOrHonor = /huawei|honor|hms|nova|mate|p30|p40|p50|kirin/i.test(userAgent);
-            
-            if (isHuaweiOrHonor || viewer.canActivateAR === false) {
-                window.location.href = trackingUrl;
-            } else {
-                viewer.activateAR();
-            }
-        });
-
-        // The Manual Escape Hatch
-        document.getElementById('force-tracking-link').addEventListener('click', (e) => {
-            e.preventDefault(); // Prevents the link from refreshing the page incorrectly
-            window.location.href = trackingUrl;
-        });
     </script>
 </body>
 </html>
