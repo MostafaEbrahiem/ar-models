@@ -1,75 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Creator Dashboard</title>
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <style>
-        body { font-family: -apple-system, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; padding: 20px; color: #333; }
-        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
-        
-        #login-section, #upload-section, #dashboard-section { display: none; }
-        
-        button { border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; margin-top: 10px; transition: 0.2s; }
-        .btn-google { background-color: #4285F4; color: white; }
-        .btn-google:hover { background-color: #3367D6; }
-        .btn-upload { background-color: #28a745; color: white; display: none; }
-        .btn-logout { background-color: #dc3545; color: white; margin-top: 20px; }
-        
-        input[type="file"] { margin: 20px 0; padding: 10px; width: 100%; box-sizing: border-box; }
-        #preview-container { display: none; margin: 15px 0; border: 2px dashed #ccc; border-radius: 8px; overflow: hidden; background: #fafafa; }
-        model-viewer { width: 100%; height: 300px; }
-        
-        .stats-box { background: #e9ecef; padding: 15px; border-radius: 8px; margin: 20px 0; font-size: 18px; }
-        .alert { color: #dc3545; font-weight: bold; }
-    </style>
-</head>
-<body>
-
-    <div class="card">
-        
-        <div id="login-section">
-            <h2>Welcome to AR Platform</h2>
-            <p>Sign in to upload and manage your 3D model.</p>
-            <button id="loginBtn" class="btn-google">Sign in with Google</button>
-        </div>
-
-        <div id="upload-section">
-            <h2>Upload Your Model</h2>
-            <p>You are allowed <b>1 model</b> and <b>3 free scans</b>.</p>
-            <p style="font-size: 14px; color: #666;">Max file size: <b>50MB</b></p>
-            <input type="file" id="fileInput" accept=".glb">
-            <div id="preview-container">
-                <model-viewer id="local-viewer" auto-rotate camera-controls shadow-intensity="1" environment-image="neutral" autoplay></model-viewer>
-            </div>
-            <button id="uploadBtn" class="btn-upload">Confirm & Upload</button>
-            <p id="upload-status" style="margin-top:15px; font-weight: bold;"></p>
-        </div>
-
-        <div id="dashboard-section">
-            <h2>Your AR Model</h2>
-            <div class="stats-box">
-                Scans Used: <span id="scan-count-display">0</span> / <span id="max-scans-display">3</span>
-            </div>
-            <div id="limit-warning" class="alert" style="display:none;">
-                You have run out of free scans! Contact support to upgrade.
-            </div>
-            
-            <p style="margin-top: 20px;"><b>Your QR Code:</b></p>
-            <div id="qrcode" style="display: flex; justify-content: center; margin: 15px 0;"></div>
-            <a id="client-link-display" href="#" target="_blank" style="color: #007bff; word-break: break-all;"></a>
-            
-            <button id="logoutBtn" class="btn-logout">Sign Out</button>
-        </div>
-
-    </div>
-
-    <script type="module">
+<script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        // Note: Using signInWithRedirect to avoid popup blocker issues
-        import { getAuth, signInWithRedirect, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        // Switched back to signInWithPopup for cross-domain reliability
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
         import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
@@ -91,12 +23,23 @@
         const uploadSec = document.getElementById('upload-section');
         const dashSec = document.getElementById('dashboard-section');
         const statusText = document.getElementById('upload-status');
+        const loginBtn = document.getElementById('loginBtn');
         
         let currentUser = null;
 
-        // Redirect Login Trigger
-        document.getElementById('loginBtn').addEventListener('click', () => {
-            signInWithRedirect(auth, new GoogleAuthProvider());
+        // THE BULLETPROOF LOGIN BUTTON
+        loginBtn.addEventListener('click', () => {
+            // Lock the button immediately to prevent double-clicks
+            loginBtn.disabled = true;
+            loginBtn.innerText = "Opening Google...";
+
+            signInWithPopup(auth, new GoogleAuthProvider())
+                .catch(err => {
+                    // If it fails, unlock the button and tell the user why
+                    alert("Login Failed: " + err.message + "\n\nTip: Look at the top right of your web address bar and make sure popups are allowed for this site!");
+                    loginBtn.disabled = false;
+                    loginBtn.innerText = "Sign in with Google";
+                });
         });
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
@@ -215,5 +158,3 @@
             );
         });
     </script>
-</body>
-</html>
