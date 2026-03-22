@@ -11,18 +11,26 @@
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; color: #333; }
 
         /* UI 1: Landing Page Styles */
-        #landing-page { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 20px; }
-        .hero-box { background: white; padding: 50px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); max-width: 600px; }
-        .logo { font-size: 24px; font-weight: bold; color: #007bff; margin-bottom: 20px; display: block; letter-spacing: 1px; }
-        h1 { color: #2c3e50; font-size: 32px; margin-bottom: 15px; line-height: 1.2; }
+        #landing-page { display: none; flex-direction: column; align-items: center; padding: 60px 20px; text-align: center; }
+        .hero-box { background: white; padding: 50px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); max-width: 700px; width: 100%; margin-bottom: 40px; }
+        .logo { font-size: 28px; font-weight: bold; color: #007bff; margin-bottom: 20px; display: block; letter-spacing: 1px; }
+        h1 { color: #2c3e50; font-size: 36px; margin-bottom: 15px; line-height: 1.2; }
         p { font-size: 18px; color: #666; line-height: 1.6; margin-bottom: 30px; }
         .cta-btn { background-color: #007bff; color: white; text-decoration: none; padding: 15px 30px; border-radius: 5px; font-size: 18px; font-weight: bold; transition: 0.2s; display: inline-block; }
         .cta-btn:hover { background-color: #0056b3; }
 
+        /* New "How It Works" Styles */
+        h2.section-title { font-size: 28px; color: #2c3e50; margin-bottom: 30px; }
+        .steps-container { display: flex; gap: 20px; max-width: 900px; width: 100%; flex-wrap: wrap; justify-content: center; }
+        .step-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); flex: 1; min-width: 250px; text-align: left; }
+        .step-number { background: #007bff; color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; margin-bottom: 15px; }
+        .step-card h3 { margin: 0 0 10px 0; color: #2c3e50; }
+        .step-card p { font-size: 15px; margin: 0; color: #666; }
+
         /* UI 2: Scanner / Bouncer Styles */
         #scanner-page { display: none; text-align: center; margin-top: 100px; }
         .error-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block; max-width: 400px; }
-        h2 { color: #dc3545; }
+        .error-card h2 { color: #dc3545; }
     </style>
 </head>
 <body>
@@ -33,6 +41,25 @@
             <h1>Turn Your 3D Models into AR QR Codes</h1>
             <p>Upload your .glb files and instantly generate tracked QR codes. No apps required. Provide your clients with a magical Web AR experience in seconds.</p>
             <a href="upload.html" class="cta-btn">Go to Creator Dashboard</a>
+        </div>
+
+        <h2 class="section-title">How It Works</h2>
+        <div class="steps-container">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <h3>Upload Your Model</h3>
+                <p>Sign in securely with Google and upload your .glb 3D file (up to 50MB) directly to our cloud storage.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <h3>Get Your QR Code</h3>
+                <p>Our platform instantly generates a unique, trackable QR code permanently linked to your specific model.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <h3>Scan & Experience</h3>
+                <p>Your clients scan the code with any smartphone camera to view the 3D model instantly in their browser.</p>
+            </div>
         </div>
     </div>
 
@@ -45,7 +72,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // Your Exact Firebase Keys
         const firebaseConfig = {
             apiKey: "AIzaSyDCAHxbic6CnLgieNd6vr0UKtByIX9XI-0",
             authDomain: "dryclean-307e9.firebaseapp.com",
@@ -58,7 +84,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // UI Elements
         const landingPage = document.getElementById('landing-page');
         const scannerPage = document.getElementById('scanner-page');
         const scannerContent = document.getElementById('scanner-content');
@@ -69,13 +94,11 @@
             const clientId = urlParams.get('id');
 
             if (!clientId) {
-                // NO ID FOUND: They just typed 3dmosta.com. Show the beautiful Landing Page!
                 landingPage.style.display = 'flex';
                 scannerPage.style.display = 'none';
                 return; 
             }
 
-            // ID FOUND: They scanned a QR Code! Run the Bouncer Logic.
             landingPage.style.display = 'none';
             scannerPage.style.display = 'block';
 
@@ -88,7 +111,6 @@
                     const scans = data.scanCount || 0;
                     const maxScans = data.maxScans || 3; 
 
-                    // THE BOUNCER: Check if they are out of credits
                     if (scans >= maxScans) {
                         loadingText.style.display = 'none';
                         scannerContent.innerHTML = `
@@ -101,10 +123,7 @@
                         return; 
                     }
 
-                    // If they have credits, add +1 to the scan count
                     await updateDoc(docRef, { scanCount: increment(1) });
-
-                    // Send them to the universal fallback viewer
                     const safeModelUrl = encodeURIComponent(data.modelUrl);
                     window.location.href = `fallback.html?model=${safeModelUrl}`;
 
@@ -119,7 +138,6 @@
             }
         }
 
-        // Run the routing check as soon as the page loads
         checkRoute();
     </script>
 </body>
