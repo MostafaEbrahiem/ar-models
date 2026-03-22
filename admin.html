@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Admin Dashboard</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        h1 { margin: 0; font-size: 24px; color: #2c3e50; }
+        .stats-container { display: flex; gap: 15px; width: 100%; }
+        .stat-card { background: #007bff; color: white; padding: 20px; border-radius: 10px; flex: 1; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .stat-card h3 { margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
+        .stat-card p { margin: 0; font-size: 28px; font-weight: bold; }
+        .stat-card.dark { background: #2c3e50; }
+
+        .table-wrapper { background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background-color: #f8f9fa; padding: 15px; border-bottom: 2px solid #e9ecef; color: #495057; }
+        td { padding: 15px; border-bottom: 1px solid #e9ecef; vertical-align: middle; }
+        tr:hover { background-color: #f8f9fa; }
+        
+        .scan-badge { background: #28a745; color: white; padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 14px; }
+        .alert-badge { background: #dc3545; } /* Red badge if they hit the limit */
+        
+        .action-buttons { display: flex; gap: 10px; align-items: center; }
+        .link-btn { background: #e9ecef; color: #333; text-decoration: none; padding: 6px 12px; border-radius: 5px; font-size: 14px; transition: 0.2s; border: none; cursor: pointer; font-weight: bold; }
+        .link-btn:hover { background: #ced4da; }
+        .delete-btn { background: #dc3545; color: white; }
+        .delete-btn:hover { background: #c82333; }
+        .update-btn { background: #ffc107; color: #000; }
+        .update-btn:hover { background: #e0a800; }
+        
+        .scans-input { width: 60px; padding: 6px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; text-align: center; }
+
+        @media (max-width: 800px) {
+            .stats-container { flex-direction: column; }
+            th, td { padding: 10px; font-size: 14px; }
+            .action-buttons { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Platform Admin</h1>
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-card">
+                <h3>Total Models</h3>
+                <p id="total-models">0</p>
+            </div>
+            <div class="stat-card dark">
+                <h3>Total Scans Used</h3>
+                <p id="total-scans">0</p>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Client Email</th>
+                        <th>Model Name</th>
+                        <th>Used / Max Scans</th>
+                        <th>Upgrade Limit</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <tr>
+                        <td colspan="5" style="text-align: center;">Loading data from database...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        // Added 'updateDoc' so we can change the scan limits
+        import { getFirestore, collection, getDocs, query, orderBy, deleteDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDCAHxbic6CnLgieNd6vr0UKtByIX9XI-0",
+            authDomain: "dryclean-307e9.firebaseapp.com",
+            projectId: "dryclean-307e9",
+            storageBucket: "3dmosta1001", 
+            messagingSenderId: "1055119275702",
+            appId: "1:1055119275702:web:7d139a70004583b1be9817"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let totalModelsCount = 0;
+        let totalScansCount = 0;
+
+        async function loadDashboardData() {
+            const tableBody = document.getElementById('table-body');
+            
+            try {
+                const q = query(collection(db, "clients"), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+                
+                tableBody.innerHTML = ''; 
+                totalModelsCount = 0;
+                totalScansCount = 0;
+
+                if (querySnapshot.empty) {
+                    tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No models uploaded yet.</td></tr>';
+                    return;
+                }
+
+                querySnapshot.forEach((documentSnapshot) => {
+                    const data = documentSnapshot.data();
+                    const docId = documentSnapshot.id;
+                    
+                    const scansUsed = data.scanCount || 0;
+                    const maxScans = data.maxScans || 3; // Defaults to 3
+                    const userEmail = data.userEmail || "Unknown (Old Upload)";
+                    const displayName = data.fileName ? data.fileName.replace('.glb', '') : 'Unnamed Model';
+                    
+                    totalModelsCount++;
+                    totalScansCount += scansUsed;
+
+                    // If they maxed out, turn the badge red so you notice it!
+                    const badgeClass = (scansUsed >= maxScans) ? "scan-badge alert-badge" : "scan-badge";
+
+                    const tr = document.createElement('tr');
+                    tr.id = `row-${docId}`;
+                    
+                    tr.innerHTML = `
+                        <td>${userEmail}</td>
+                        <td><strong>${displayName}</strong></td>
+                        <td><span class="${badgeClass}">${scansUsed}</span> / ${maxScans}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <input type="number" id="input-${docId}" class="scans-input" value="${maxScans}" min="1">
+                                <button class="link-btn update-btn" data-id="${docId}">Save</button>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="https://mostafaebrahiem.github.io/ar-models/?id=${docId}" target="_blank" class="link-btn" style="background: #007bff; color: white;">View</a>
+                                <button class="link-btn delete-btn" data-id="${docId}" data-name="${displayName}">Delete</button>
+                            </div>
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+
+                document.getElementById('total-models').innerText = totalModelsCount;
+                document.getElementById('total-scans').innerText = totalScansCount;
+
+                attachActionListeners();
+
+            } catch (error) {
+                console.error("Error loading data: ", error);
+                tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Error loading data. Check console.</td></tr>`;
+            }
+        }
+
+        function attachActionListeners() {
+            // --- 1. THE UPDATE BUTTON LOGIC ---
+            const updateButtons = document.querySelectorAll('.update-btn');
+            updateButtons.forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const docId = e.target.getAttribute('data-id');
+                    const inputField = document.getElementById(`input-${docId}`);
+                    const newMaxScans = parseInt(inputField.value);
+
+                    if (newMaxScans < 1) {
+                        alert("Max scans must be at least 1.");
+                        return;
+                    }
+
+                    // Visual feedback that it's saving
+                    const originalText = e.target.innerText;
+                    e.target.innerText = "Saving...";
+                    e.target.style.opacity = "0.7";
+
+                    try {
+                        // Push the new limit to Firebase
+                        await updateDoc(doc(db, "clients", docId), {
+                            maxScans: newMaxScans
+                        });
+                        
+                        // Flash green to show success, then reload the page to refresh the table
+                        e.target.innerText = "Done!";
+                        e.target.style.background = "#28a745"; 
+                        e.target.style.color = "white";
+                        e.target.style.opacity = "1";
+                        
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+
+                    } catch (error) {
+                        console.error("Update error: ", error);
+                        alert("Failed to update scans.");
+                        e.target.innerText = "Save";
+                        e.target.style.opacity = "1";
+                    }
+                });
+            });
+
+            // --- 2. THE DELETE BUTTON LOGIC ---
+            const deleteButtons = document.querySelectorAll('.delete-btn');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const docId = e.target.getAttribute('data-id');
+                    const modelName = e.target.getAttribute('data-name');
+
+                    if (confirm(`Are you sure you want to delete "${modelName}"?`)) {
+                        e.target.innerText = "Deleting...";
+                        try {
+                            await deleteDoc(doc(db, "clients", docId));
+                            document.getElementById(`row-${docId}`).remove();
+                            // Optional: subtract from total counts visually here
+                        } catch (error) {
+                            console.error("Error deleting: ", error);
+                            alert("Failed to delete.");
+                            e.target.innerText = "Delete";
+                        }
+                    }
+                });
+            });
+        }
+
+        loadDashboardData();
+    </script>
+</body>
+</html>
