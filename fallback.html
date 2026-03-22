@@ -43,12 +43,14 @@
         <model-viewer 
             id="ar-viewer" 
             crossorigin="anonymous"
+            alt="A 3D model"
             auto-rotate 
             camera-controls 
-            camera-orbit="0deg 75deg 1000%"
-            shadow-intensity="1" 
-            environment-image="neutral" 
-            autoplay>
+            autoplay
+            environment-image="neutral"
+            shadow-intensity="1"
+            camera-orbit="auto auto 500%" 
+            max-camera-orbit="auto auto 1000%">
             
             <div class="progress-bar hide" slot="progress-bar">
                 <div class="update-bar"></div>
