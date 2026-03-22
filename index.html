@@ -3,17 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loading AR...</title>
+    
+    <title>3D Models to AR | Generate AR QR Codes Instantly - 3Dmosta</title>
+    <meta name="description" content="Upload your .glb 3D models and instantly generate a QR code for a seamless, app-free Web AR experience. Host your 3D models online with 3Dmosta.">
+
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; color: #333; }
+
+        /* UI 1: Landing Page Styles */
+        #landing-page { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 20px; }
+        .hero-box { background: white; padding: 50px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); max-width: 600px; }
+        .logo { font-size: 24px; font-weight: bold; color: #007bff; margin-bottom: 20px; display: block; letter-spacing: 1px; }
+        h1 { color: #2c3e50; font-size: 32px; margin-bottom: 15px; line-height: 1.2; }
+        p { font-size: 18px; color: #666; line-height: 1.6; margin-bottom: 30px; }
+        .cta-btn { background-color: #007bff; color: white; text-decoration: none; padding: 15px 30px; border-radius: 5px; font-size: 18px; font-weight: bold; transition: 0.2s; display: inline-block; }
+        .cta-btn:hover { background-color: #0056b3; }
+
+        /* UI 2: Scanner / Bouncer Styles */
+        #scanner-page { display: none; text-align: center; margin-top: 100px; }
+        .error-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block; max-width: 400px; }
+        h2 { color: #dc3545; }
+    </style>
 </head>
-<body style="text-align: center; font-family: sans-serif; margin-top: 50px; background-color: #f4f4f4;">
-    <h2>Opening AR Experience...</h2>
-    <p>Please wait a moment.</p>
+<body>
+
+    <div id="landing-page">
+        <div class="hero-box">
+            <span class="logo">3Dmosta</span>
+            <h1>Turn Your 3D Models into AR QR Codes</h1>
+            <p>Upload your .glb files and instantly generate tracked QR codes. No apps required. Provide your clients with a magical Web AR experience in seconds.</p>
+            <a href="upload.html" class="cta-btn">Go to Creator Dashboard</a>
+        </div>
+    </div>
+
+    <div id="scanner-page">
+        <h2 id="loading-text" style="color: #333;">Opening 3D Experience...</h2>
+        <div id="scanner-content"></div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // Your Exact Firebase Config
+        // Your Exact Firebase Keys
         const firebaseConfig = {
             apiKey: "AIzaSyDCAHxbic6CnLgieNd6vr0UKtByIX9XI-0",
             authDomain: "dryclean-307e9.firebaseapp.com",
@@ -26,14 +58,26 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        async function launchAR() {
+        // UI Elements
+        const landingPage = document.getElementById('landing-page');
+        const scannerPage = document.getElementById('scanner-page');
+        const scannerContent = document.getElementById('scanner-content');
+        const loadingText = document.getElementById('loading-text');
+
+        async function checkRoute() {
             const urlParams = new URLSearchParams(window.location.search);
             const clientId = urlParams.get('id');
 
             if (!clientId) {
-                document.body.innerHTML = "<h2>Error: Invalid QR Code.</h2><p>No ID found in the link.</p>";
-                return;
+                // NO ID FOUND: They just typed 3dmosta.com. Show the beautiful Landing Page!
+                landingPage.style.display = 'flex';
+                scannerPage.style.display = 'none';
+                return; 
             }
+
+            // ID FOUND: They scanned a QR Code! Run the Bouncer Logic.
+            landingPage.style.display = 'none';
+            scannerPage.style.display = 'block';
 
             try {
                 const docRef = doc(db, "clients", clientId);
@@ -41,33 +85,42 @@
 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    const modelUrl = data.modelUrl;
+                    const scans = data.scanCount || 0;
+                    const maxScans = data.maxScans || 3; 
 
-                    // Add +1 to the scan count
-                    await updateDoc(docRef, { scanCount: increment(1) });
-
-                    const fallbackUrl = `https://mostafaebrahiem.github.io/ar-models/fallback.html?model=${encodeURIComponent(modelUrl)}`;
-                    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-
-                    if (/android/i.test(userAgent)) {
-                        // FIX: Safely encode the Firebase URL so Android doesn't delete the security token!
-                        const safeModelUrl = encodeURIComponent(modelUrl);
-                        
-                        window.location.href = `intent://arvr.google.com/scene-viewer/1.0?file=${safeModelUrl}&mode=ar_only#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(fallbackUrl)};end;`;
-                    } else {
-                        window.location.href = fallbackUrl;
+                    // THE BOUNCER: Check if they are out of credits
+                    if (scans >= maxScans) {
+                        loadingText.style.display = 'none';
+                        scannerContent.innerHTML = `
+                            <div class='error-card'>
+                                <h2>Scan Limit Reached</h2>
+                                <p>This 3D model has used all ${maxScans} of its free views.</p>
+                                <p>Please ask the owner to upgrade their account.</p>
+                            </div>
+                        `;
+                        return; 
                     }
 
+                    // If they have credits, add +1 to the scan count
+                    await updateDoc(docRef, { scanCount: increment(1) });
+
+                    // Send them to the universal fallback viewer
+                    const safeModelUrl = encodeURIComponent(data.modelUrl);
+                    window.location.href = `fallback.html?model=${safeModelUrl}`;
+
                 } else {
-                    document.body.innerHTML = "<h2>Error: 3D Model not found in database.</h2>";
+                    loadingText.style.display = 'none';
+                    scannerContent.innerHTML = "<div class='error-card'><h2>Not Found</h2><p>This 3D model was deleted or does not exist.</p></div>";
                 }
             } catch (error) {
                 console.error("Database error:", error);
-                document.body.innerHTML = "<h2>Error connecting to server.</h2>";
+                loadingText.style.display = 'none';
+                scannerContent.innerHTML = "<div class='error-card'><h2>Connection Error</h2><p>Could not connect to the server.</p></div>";
             }
         }
 
-        launchAR();
+        // Run the routing check as soon as the page loads
+        checkRoute();
     </script>
 </body>
 </html>
