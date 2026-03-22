@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Creator Dashboard</title>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-B80PCPRNQ9"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-B80PCPRNQ9');
+    </script>
+
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
@@ -68,7 +78,6 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        // Using Popup for maximum cross-browser reliability
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
         import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
@@ -95,7 +104,6 @@
         
         let currentUser = null;
 
-        // The Bulletproof Login Button Logic
         loginBtn.addEventListener('click', () => {
             loginBtn.disabled = true;
             loginBtn.innerText = "Opening Google...";
@@ -112,7 +120,6 @@
             signOut(auth).then(() => location.reload());
         });
 
-        // Check Login State
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
@@ -125,7 +132,6 @@
             }
         });
 
-        // Check if user already has a model
         async function checkUserModels(uid) {
             const q = query(collection(db, "clients"), where("uid", "==", uid));
             const querySnapshot = await getDocs(q);
@@ -146,7 +152,8 @@
                     document.getElementById('limit-warning').style.display = 'block';
                 }
 
-                const clientLink = `https://mostafaebrahiem.github.io/ar-models/?id=${docId}`;
+                // Pointing to your custom domain
+                const clientLink = `https://3dmosta.com/?id=${docId}`;
                 document.getElementById('client-link-display').href = clientLink;
                 document.getElementById('client-link-display').innerText = clientLink;
 
@@ -159,7 +166,6 @@
             }
         }
 
-        // File Selection and Preview Logic
         const fileInput = document.getElementById('fileInput');
         const uploadBtn = document.getElementById('uploadBtn');
         const previewContainer = document.getElementById('preview-container');
@@ -190,7 +196,6 @@
             }
         });
 
-        // Final Cloud Upload Logic
         uploadBtn.addEventListener('click', () => {
             const file = fileInput.files[0];
             if (!file || !currentUser) return;
@@ -220,7 +225,7 @@
                             maxScans: 3,                   
                             createdAt: serverTimestamp()
                         });
-                        location.reload(); // Refresh to show the dashboard
+                        location.reload(); 
                     });
                 }
             );
