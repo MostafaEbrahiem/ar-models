@@ -26,6 +26,8 @@
         .btn-google { background-color: #4285F4; color: white; }
         .btn-google:hover { background-color: #3367D6; }
         .btn-upload { background-color: #28a745; color: white; display: none; }
+        .btn-download { background-color: #17a2b8; color: white; margin-bottom: 20px; }
+        .btn-download:hover { background-color: #138496; }
         .btn-logout { background-color: #dc3545; color: white; margin-top: 20px; }
         
         input[type="file"] { margin: 20px 0; padding: 10px; width: 100%; box-sizing: border-box; }
@@ -34,6 +36,12 @@
         
         .stats-box { background: #e9ecef; padding: 15px; border-radius: 8px; margin: 20px 0; font-size: 18px; }
         .alert { color: #dc3545; font-weight: bold; }
+
+        /* Progress Bar Styles */
+        .progress-wrapper { display: none; margin-top: 15px; width: 100%; }
+        .progress-bar-bg { background-color: #e9ecef; border-radius: 5px; width: 100%; height: 20px; overflow: hidden; }
+        .progress-bar-fill { background-color: #007bff; width: 0%; height: 100%; transition: width 0.2s ease; }
+        .progress-text { margin-top: 8px; font-size: 14px; font-weight: bold; color: #555; }
     </style>
 </head>
 <body>
@@ -56,6 +64,13 @@
             </div>
             <button id="uploadBtn" class="btn-upload">Confirm & Upload</button>
             <p id="upload-status" style="margin-top:15px; font-weight: bold;"></p>
+            
+            <div class="progress-wrapper" id="progress-wrapper">
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="progress-bar"></div>
+                </div>
+                <p class="progress-text" id="progress-text">0% Uploaded</p>
+            </div>
         </div>
 
         <div id="dashboard-section">
@@ -69,6 +84,10 @@
             
             <p style="margin-top: 20px;"><b>Your QR Code:</b></p>
             <div id="qrcode" style="display: flex; justify-content: center; margin: 15px 0;"></div>
+            
+            <button id="downloadQrBtn" class="btn-download">Download QR Code</button>
+            <br>
+
             <a id="client-link-display" href="#" target="_blank" style="color: #007bff; word-break: break-all;"></a>
             
             <button id="logoutBtn" class="btn-logout">Sign Out</button>
@@ -152,7 +171,6 @@
                     document.getElementById('limit-warning').style.display = 'block';
                 }
 
-                // Pointing to your custom domain
                 const clientLink = `https://3dmosta.com/?id=${docId}`;
                 document.getElementById('client-link-display').href = clientLink;
                 document.getElementById('client-link-display').innerText = clientLink;
@@ -166,16 +184,46 @@
             }
         }
 
+        document.getElementById('downloadQrBtn').addEventListener('click', () => {
+            const qrCanvas = document.querySelector('#qrcode canvas');
+            const qrImg = document.querySelector('#qrcode img');
+            
+            let imgUrl = null;
+            if (qrCanvas) {
+                imgUrl = qrCanvas.toDataURL('image/png');
+            } else if (qrImg && qrImg.src) {
+                imgUrl = qrImg.src;
+            }
+
+            if (imgUrl) {
+                const link = document.createElement('a');
+                link.href = imgUrl;
+                link.download = '3Dmosta_QR_Code.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                alert("QR Code is still generating, please wait a second.");
+            }
+        });
+
         const fileInput = document.getElementById('fileInput');
         const uploadBtn = document.getElementById('uploadBtn');
         const previewContainer = document.getElementById('preview-container');
         const localViewer = document.getElementById('local-viewer');
+        
+        // Progress Bar Elements
+        const progressWrapper = document.getElementById('progress-wrapper');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
         
         const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
         fileInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             statusText.innerText = "";
+            progressWrapper.style.display = 'none'; // Hide progress bar on new selection
+            progressBar.style.width = '0%';
             
             if (file) {
                 if (file.size > MAX_FILE_SIZE) {
@@ -201,21 +249,43 @@
             if (!file || !currentUser) return;
 
             uploadBtn.disabled = true;
-            statusText.innerText = "Uploading... Please wait.";
+            statusText.innerText = "Initializing upload...";
             statusText.style.color = "#007bff";
+            
+            // Show the progress bar container
+            progressWrapper.style.display = 'block';
 
             const storageRef = ref(storage, 'models/' + currentUser.uid + '_' + file.name);
             const uploadTask = uploadBytesResumable(storageRef, file);
 
-            uploadTask.on('state_changed', null, 
+            // The magical state_changed listener that tracks upload bytes
+            uploadTask.on('state_changed', 
+                (snapshot) => {
+                    // Calculate the percentage
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    
+                    // Update the visual width of the bar
+                    progressBar.style.width = Math.round(progress) + '%';
+                    
+                    // Update the text percentage
+                    progressText.innerText = Math.round(progress) + '% Uploaded';
+                    
+                    // Change status text to let them know it's actively moving
+                    statusText.innerText = "Uploading to server...";
+                }, 
                 (error) => { 
                     statusText.innerText = "Upload failed: " + error.message; 
                     statusText.style.color = "red";
                     uploadBtn.disabled = false;
+                    progressWrapper.style.display = 'none'; // Hide on error
                 }, 
                 () => {
+                    // Upload is complete! Now we save the database record.
+                    statusText.innerText = "Upload complete! Saving profile...";
+                    progressBar.style.backgroundColor = "#28a745"; // Turn the bar green when done
+                    progressText.innerText = "100% Complete";
+
                     getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
-                        statusText.innerText = "Saving profile...";
                         await addDoc(collection(db, "clients"), {
                             uid: currentUser.uid,          
                             userEmail: currentUser.email,  
