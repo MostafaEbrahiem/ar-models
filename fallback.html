@@ -10,22 +10,20 @@
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-
       gtag('config', 'G-B80PCPRNQ9');
     </script>
 
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     
     <style>
-        /* Clean, modern background so it doesn't look like a black screen crash */
         body { margin: 0; padding: 0; background-color: #f4f7f6; overflow: hidden; height: 100vh; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; }
-        
         #viewer-container { flex-grow: 1; width: 100%; height: 100%; position: relative; }
         
         model-viewer { width: 100%; height: 100%; background-color: #eeeeee; }
         
-        #error-message { color: #333; display: none; text-align: center; padding: 40px 20px; }
+        #error-message { color: #333; display: none; text-align: center; padding: 40px 20px; z-index: 10; position: absolute; top: 20%; width: 100%; box-sizing: border-box; }
         #error-message h2 { color: #dc3545; }
+        #debug-text { font-family: monospace; font-size: 12px; color: #666; background: #fff; padding: 10px; border-radius: 5px; border: 1px solid #ccc; display: inline-block; max-width: 90%; word-break: break-all; margin-top: 20px; }
         
         /* The Mobile Download Progress Bar */
         .progress-bar { display: block; width: 50%; height: 8px; position: absolute; left: 25%; top: 50%; transform: translateY(-50%); border-radius: 4px; box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1); background-color: rgba(255, 255, 255, 0.8); overflow: hidden;}
@@ -35,14 +33,16 @@
 </head>
 <body>
 
-    <div id="error-message">
-        <h2>Model Not Found</h2>
-        <p>We couldn't load the requested 3D model. Please check the scan link and try again.</p>
-    </div>
-    
     <div id="viewer-container">
+        <div id="error-message">
+            <h2>Model Failed to Load</h2>
+            <p>We encountered an issue loading the 3D file.</p>
+            <div id="debug-text">Waiting for error details...</div>
+        </div>
+
         <model-viewer 
             id="ar-viewer" 
+            crossorigin="anonymous"
             auto-rotate 
             camera-controls 
             shadow-intensity="1" 
@@ -62,25 +62,27 @@
     </div>
 
     <script>
-        // Grab the model URL that was passed from index.html (the Bouncer)
         const urlParams = new URLSearchParams(window.location.search);
-        const modelUrl = urlParams.get('model');
-        const viewerContainer = document.getElementById('viewer-container');
+        let modelUrl = urlParams.get('model');
         const viewer = document.getElementById('ar-viewer');
         const errorMsg = document.getElementById('error-message');
+        const debugText = document.getElementById('debug-text');
 
         if (modelUrl) {
-            // Decode the URL and feed it to the AR viewer
-            viewer.setAttribute('src', decodeURIComponent(modelUrl));
+            // THE FIX: If the browser accidentally decoded the Firebase folder slash, 
+            // this forces it back into the safe %2F format so Firebase accepts the request!
+            if (modelUrl.includes('/o/models/')) {
+                modelUrl = modelUrl.replace('/o/models/', '/o/models%2F');
+            }
+
+            viewer.setAttribute('src', modelUrl);
             
-            // Connect the visual loading bar to the actual download progress
+            // Track Loading Progress
             viewer.addEventListener('progress', (event) => {
                 const progressBar = viewer.querySelector('.progress-bar');
                 const updateBar = viewer.querySelector('.update-bar');
-                
                 updateBar.style.width = `${event.detail.totalProgress * 100}%`;
                 
-                // Hide the bar completely when it hits 100%
                 if (event.detail.totalProgress === 1) {
                     progressBar.classList.add('hide');
                 } else {
@@ -88,10 +90,18 @@
                 }
             });
 
+            // Catch errors
+            viewer.addEventListener('error', (event) => {
+                viewer.style.display = 'none';
+                errorMsg.style.display = 'block';
+                debugText.innerText = "Attempted to load:\n" + modelUrl;
+                console.error("Model Viewer Error: ", event);
+            });
+
         } else {
-            // If no model was passed in the URL, show an error
-            viewerContainer.style.display = 'none';
+            viewer.style.display = 'none';
             errorMsg.style.display = 'block';
+            debugText.innerText = "No model ID was found in the web address.";
         }
     </script>
 
