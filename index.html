@@ -15,6 +15,8 @@
       gtag('config', 'G-B80PCPRNQ9');
     </script>
 
+    <script src="https://www.paypal.com/sdk/js?client-id=ARczBk98dgnfF10lQT8hoCIujZNSJX3Ffie3EyOOvZiHq8HLKRbL69ELF39I6z53F5s2gFY64EsIOxDO&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
+
     <style>
         :root {
             --primary: #00d2ff;
@@ -25,41 +27,11 @@
             --text-dim: #94a3b8;
         }
 
-        body { 
-            font-family: 'Inter', -apple-system, sans-serif; 
-            margin: 0; 
-            padding: 0; 
-            background-color: var(--dark-bg); 
-            color: var(--text-main);
-            line-height: 1.6;
-            scroll-behavior: smooth;
-        }
-
-        /* BACKGROUND GRADIENT ANIMATION */
-        .bg-glow {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at 50% -20%, #1e293b, #0f172a);
-            z-index: -1;
-        }
+        body { font-family: 'Inter', -apple-system, sans-serif; margin: 0; padding: 0; background-color: var(--dark-bg); color: var(--text-main); line-height: 1.6; scroll-behavior: smooth; }
+        .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% -20%, #1e293b, #0f172a); z-index: -1; }
 
         /* THE NAVIGATION BAR */
-        .navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 40px;
-            box-sizing: border-box;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            z-index: 100;
-        }
-
+        .navbar { position: fixed; top: 0; left: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; box-sizing: border-box; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); z-index: 100; }
         .nav-logo { font-size: 24px; font-weight: 800; color: white; text-decoration: none; letter-spacing: -1px; }
         .nav-links { display: flex; gap: 25px; align-items: center; }
         .nav-item { color: var(--text-dim); text-decoration: none; font-weight: 600; font-size: 15px; transition: color 0.2s; }
@@ -70,37 +42,11 @@
         #landing-page { display: flex; flex-direction: column; align-items: center; padding: 120px 20px 80px; text-align: center; }
 
         /* HERO SECTION */
-        .hero-box { 
-            background: var(--glass);
-            backdrop-filter: blur(12px);
-            padding: 60px 40px; 
-            border-radius: 24px; 
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            max-width: 850px; 
-            width: 100%; 
-            margin-bottom: 60px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-
-        .logo-gradient { 
-            font-size: 32px; 
-            font-weight: 800; 
-            background: linear-gradient(to right, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 24px; 
-            display: inline-block;
-            letter-spacing: -1px;
-        }
-
+        .hero-box { background: var(--glass); backdrop-filter: blur(12px); padding: 60px 40px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1); max-width: 850px; width: 100%; margin-bottom: 60px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+        .logo-gradient { font-size: 32px; font-weight: 800; background: linear-gradient(to right, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 24px; display: inline-block; letter-spacing: -1px; }
         h1 { font-size: clamp(32px, 5vw, 56px); margin-bottom: 20px; line-height: 1.1; font-weight: 800; letter-spacing: -0.02em; }
         .hero-box p { font-size: 20px; color: var(--text-dim); max-width: 600px; margin: 0 auto 40px; }
-        
-        .cta-btn { 
-            background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; text-decoration: none; 
-            padding: 18px 36px; border-radius: 12px; font-size: 18px; font-weight: 700; transition: transform 0.2s, box-shadow 0.2s; 
-            display: inline-block; box-shadow: 0 10px 20px -5px rgba(0, 210, 255, 0.4);
-        }
+        .cta-btn { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; text-decoration: none; padding: 18px 36px; border-radius: 12px; font-size: 18px; font-weight: 700; transition: transform 0.2s, box-shadow 0.2s; display: inline-block; box-shadow: 0 10px 20px -5px rgba(0, 210, 255, 0.4); }
         .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 15px 30px -5px rgba(0, 210, 255, 0.6); }
 
         .status-pill { display: inline-flex; align-items: center; background: rgba(34, 197, 94, 0.1); color: #4ade80; padding: 6px 16px; border-radius: 99px; font-size: 13px; font-weight: 600; margin-bottom: 20px; border: 1px solid rgba(34, 197, 94, 0.2); }
@@ -117,78 +63,35 @@
         .step-card h3 { margin-bottom: 12px; font-size: 22px; }
         .step-card p { color: var(--text-dim); font-size: 16px; margin: 0; }
 
-        /* --- PRICING SECTION --- */
+        /* PRICING SECTION */
         #pricing { padding: 40px 20px; text-align: center; width: 100%; max-width: 1100px; }
         .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 40px; }
-        
-        .pricing-card { 
-            background: var(--glass); 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-            border-radius: 24px; 
-            padding: 40px 30px; 
-            text-align: left; 
-            display: flex; 
-            flex-direction: column;
-            transition: transform 0.3s ease;
-        }
-        
+        .pricing-card { background: var(--glass); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 40px 30px; text-align: left; display: flex; flex-direction: column; transition: transform 0.3s ease; }
         .pricing-card:hover { transform: translateY(-10px); }
         
-        /* The Featured (Pro) Tier */
-        .pricing-card.featured {
-            background: rgba(15, 23, 42, 0.6);
-            border: 2px solid var(--primary);
-            box-shadow: 0 0 30px rgba(0, 210, 255, 0.15);
-            transform: scale(1.05);
-        }
+        .pricing-card.featured { background: rgba(15, 23, 42, 0.6); border: 2px solid var(--primary); box-shadow: 0 0 30px rgba(0, 210, 255, 0.15); transform: scale(1.05); }
         .pricing-card.featured:hover { transform: scale(1.05) translateY(-10px); }
 
         .tier-name { font-size: 20px; font-weight: 700; color: var(--text-dim); margin-bottom: 15px; }
         .featured .tier-name { color: var(--primary); }
-        
         .tier-price { font-size: 48px; font-weight: 800; margin-bottom: 20px; color: white; }
         .tier-price span { font-size: 18px; color: var(--text-dim); font-weight: normal; }
-        
         .tier-features { list-style: none; padding: 0; margin: 0 0 40px 0; flex-grow: 1; }
         .tier-features li { margin-bottom: 15px; font-size: 16px; color: #cbd5e1; display: flex; align-items: center; }
         .tier-features li::before { content: "✓"; color: #22c55e; font-weight: bold; margin-right: 12px; font-size: 18px; }
         
-        .btn-pricing {
-            display: block;
-            text-align: center;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 15px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: 0.2s;
-        }
+        .btn-pricing { display: block; text-align: center; background: rgba(255, 255, 255, 0.1); color: white; padding: 15px; border-radius: 12px; text-decoration: none; font-weight: bold; transition: 0.2s; }
         .btn-pricing:hover { background: rgba(255, 255, 255, 0.2); }
         
-        .featured .btn-pricing {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3);
-        }
-        .featured .btn-pricing:hover { opacity: 0.9; box-shadow: 0 10px 20px rgba(0, 210, 255, 0.5); }
-
-        /* SCANNER BOUNCER UI */
+        /* SCANNER UI */
         #scanner-page { display: none; text-align: center; padding-top: 15vh; }
         .loader { border: 4px solid var(--glass); border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        @media (max-width: 800px) {
-            .pricing-card.featured { transform: scale(1); }
-            .pricing-card.featured:hover { transform: translateY(-10px); }
-        }
-        @media (max-width: 600px) {
-            .navbar { padding: 15px 20px; }
-            .nav-links { gap: 15px; }
-            .hero-box { padding: 40px 20px; }
-            h1 { font-size: 36px; }
-        }
+        @media (max-width: 800px) { .pricing-card.featured { transform: scale(1); } .pricing-card.featured:hover { transform: translateY(-10px); } }
+        @media (max-width: 600px) { .navbar { padding: 15px 20px; } .nav-links { gap: 15px; } .hero-box { padding: 40px 20px; } h1 { font-size: 36px; } }
     </style>
 </head>
 <body>
@@ -216,21 +119,9 @@
         <p class="section-subtitle">Three simple steps to bring your 3D assets into the real world.</p>
         
         <div class="steps-container">
-            <div class="step-card">
-                <div class="step-number">01</div>
-                <h3>Secure Upload</h3>
-                <p>Upload production-ready .glb files up to 50MB. Integrated Google Auth keeps your assets private.</p>
-            </div>
-            <div class="step-card">
-                <div class="step-number">02</div>
-                <h3>Instant QR</h3>
-                <p>Get a unique, high-resolution QR code instantly mapped to your 3D asset. Ready for print or digital.</p>
-            </div>
-            <div class="step-card">
-                <div class="step-number">03</div>
-                <h3>Global Access</h3>
-                <p>Your clients scan and view. No apps to download, no friction to overcome. Works on iOS and Android.</p>
-            </div>
+            <div class="step-card"><div class="step-number">01</div><h3>Secure Upload</h3><p>Upload production-ready .glb files up to 50MB. Integrated Google Auth keeps your assets private.</p></div>
+            <div class="step-card"><div class="step-number">02</div><h3>Instant QR</h3><p>Get a unique, high-resolution QR code instantly mapped to your 3D asset. Ready for print or digital.</p></div>
+            <div class="step-card"><div class="step-number">03</div><h3>Global Access</h3><p>Your clients scan and view. No apps to download, no friction to overcome. Works on iOS and Android.</p></div>
         </div>
         
         <div id="pricing">
@@ -243,10 +134,7 @@
                     <div class="tier-name">Starter</div>
                     <div class="tier-price">$0<span>/mo</span></div>
                     <ul class="tier-features">
-                        <li>1 Active 3D Model</li>
-                        <li>3 Free Scans</li>
-                        <li>Standard AR Viewer</li>
-                        <li>50MB File Limit</li>
+                        <li>1 Active 3D Model</li><li>3 Free Scans</li><li>Standard AR Viewer</li><li>50MB File Limit</li>
                     </ul>
                     <a href="upload.html" class="btn-pricing">Start for Free</a>
                 </div>
@@ -255,29 +143,22 @@
                     <div class="tier-name">Professional</div>
                     <div class="tier-price">$15<span>/mo</span></div>
                     <ul class="tier-features">
-                        <li>Up to 10 Active Models</li>
-                        <li>1,000 Scans per Month</li>
-                        <li>High-Priority Server Speed</li>
-                        <li>Email Support</li>
+                        <li>Up to 10 Active Models</li><li>1,000 Scans per Month</li><li>High-Priority Server Speed</li><li>Email Support</li>
                     </ul>
-                    <a href="mailto:mostafaebrahiem1998@gmail.com?subject=Upgrade%20to%20Pro%20Plan" class="btn-pricing">Upgrade to Pro</a>
+                    <div id="paypal-button-container-P-0P996054HY607042DNHAQBJI" style="margin-top: 15px; position: relative; z-index: 10;"></div>
                 </div>
 
                 <div class="pricing-card">
                     <div class="tier-name">Business</div>
                     <div class="tier-price">$49<span>/mo</span></div>
                     <ul class="tier-features">
-                        <li>Unlimited 3D Models</li>
-                        <li>Unlimited Scans</li>
-                        <li>Dedicated Hosting Bucket</li>
-                        <li>24/7 Priority Support</li>
+                        <li>Unlimited 3D Models</li><li>Unlimited Scans</li><li>Dedicated Hosting Bucket</li><li>24/7 Priority Support</li>
                     </ul>
                     <a href="mailto:mostafaebrahiem1998@gmail.com?subject=Upgrade%20to%20Business%20Plan" class="btn-pricing">Contact Sales</a>
                 </div>
 
             </div>
         </div>
-
     </div>
 
     <div id="scanner-page">
@@ -302,6 +183,29 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // -- PAYPAL SMART BUTTON LOGIC --
+        if (window.paypal) {
+            paypal.Buttons({
+                style: {
+                    shape: 'rect',
+                    color: 'gold',
+                    layout: 'vertical',
+                    label: 'subscribe'
+                },
+                createSubscription: function(data, actions) {
+                    return actions.subscription.create({
+                        plan_id: 'P-0P996054HY607042DNHAQBJI' // Your exact Plan ID
+                    });
+                },
+                onApprove: function(data, actions) {
+                    // Triggers when the payment is successful
+                    alert("Payment Successful! Subscription ID: " + data.subscriptionID + "\n\nPlease log in to your dashboard. Your account limits will be upgraded shortly.");
+                    window.location.href = "upload.html"; // Redirects to their models page
+                }
+            }).render('#paypal-button-container-P-0P996054HY607042DNHAQBJI'); 
+        }
+
+        // -- EXISTING ROUTER LOGIC --
         const landingPage = document.getElementById('landing-page');
         const scannerPage = document.getElementById('scanner-page');
         const scannerContent = document.getElementById('scanner-content');
