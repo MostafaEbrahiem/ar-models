@@ -36,7 +36,13 @@
         .btn-upload:hover { background-color: #0056b3; }
         .btn-logout { background-color: #e2e8f0; color: #475569; }
         .btn-logout:hover { background-color: #cbd5e1; }
-        .btn-download { background-color: #10b981; color: white; width: 100%; margin-top: 15px; }
+        
+        /* New View Button */
+        .btn-view { background-color: #3b82f6; color: white; width: 100%; margin-top: 15px; }
+        .btn-view:hover { background-color: #2563eb; }
+        
+        /* Adjusted margins so they stack nicely */
+        .btn-download { background-color: #10b981; color: white; width: 100%; margin-top: 10px; }
         .btn-download:hover { background-color: #059669; }
         .btn-delete-model { background-color: #fee2e2; color: #ef4444; width: 100%; margin-top: 10px; }
         .btn-delete-model:hover { background-color: #fecaca; }
@@ -231,6 +237,7 @@
                     <div class="stats ${scanTextClass}">${scanText}</div>
                     <div id="qr-${docId}" style="display: flex; justify-content: center; margin-bottom: 10px;"></div>
                     
+                    <button id="viewBtn-${docId}" class="btn-view">View Fullscreen</button>
                     <button id="downloadBtn-${docId}" class="btn-download">Download QR</button>
                     <button id="deleteBtn-${docId}" class="btn-delete-model">Delete Model</button>
                 `;
@@ -239,6 +246,12 @@
 
                 const qrContainer = document.getElementById(`qr-${docId}`);
                 new QRCode(qrContainer, { text: clientLink, width: 120, height: 120 });
+
+                // Event listener for the new View button (bypasses scan limit increment)
+                document.getElementById(`viewBtn-${docId}`).addEventListener('click', () => {
+                    const encodedUrl = encodeURIComponent(data.modelUrl);
+                    window.open(`fallback.html?model=${encodedUrl}`, '_blank');
+                });
 
                 document.getElementById(`downloadBtn-${docId}`).addEventListener('click', () => {
                     const canvas = qrContainer.querySelector('canvas');
