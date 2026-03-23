@@ -290,11 +290,22 @@
             progressBar.style.width = '0%';
             
             if (file) {
+                // STRICT EXTENSION CHECK
+                if (!file.name.toLowerCase().endsWith('.glb')) {
+                    statusText.innerText = "Error: Only .glb files are allowed!";
+                    statusText.style.color = "red";
+                    uploadBtn.style.display = 'none';
+                    previewContainer.style.display = 'none';
+                    fileInput.value = ""; // Clear the bad file
+                    return; 
+                }
+
                 if (file.size > 50 * 1024 * 1024) {
                     statusText.innerText = "Error: File is too large! (Max 50MB)";
                     statusText.style.color = "red";
                     uploadBtn.style.display = 'none';
                     previewContainer.style.display = 'none';
+                    fileInput.value = ""; // Clear the bad file
                     return; 
                 }
                 
