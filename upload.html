@@ -37,9 +37,11 @@
         .btn-download { background-color: #10b981; color: white; width: 100%; margin-top: 15px; }
         .btn-download:hover { background-color: #059669; }
 
-        /* Upload Area */
+        /* Upload Area & Preview */
         .upload-area { background: #f8fafc; border: 2px dashed #cbd5e1; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 30px; }
         input[type="file"] { margin: 10px 0; }
+        #preview-container { display: none; margin: 15px auto; max-width: 500px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: white; }
+        #preview-container model-viewer { width: 100%; height: 300px; margin-bottom: 0; border-radius: 0; }
         
         /* The Gallery Grid */
         .models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
@@ -84,7 +86,23 @@
             <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">Max file size: 50MB (.glb only)</p>
             
             <input type="file" id="fileInput" accept=".glb">
-            <button id="uploadBtn" class="btn-upload" style="display: none;">Upload to Gallery</button>
+            
+            <div id="preview-container">
+                <model-viewer 
+                    id="local-viewer" 
+                    crossorigin="anonymous"
+                    alt="A 3D model preview"
+                    auto-rotate 
+                    camera-controls 
+                    autoplay
+                    environment-image="neutral"
+                    shadow-intensity="1"
+                    camera-orbit="auto auto 500%" 
+                    max-camera-orbit="auto auto 1000%">
+                </model-viewer>
+            </div>
+
+            <button id="uploadBtn" class="btn-upload" style="display: none; margin: 15px auto 0;">Upload to Gallery</button>
             <p id="upload-status" style="margin-top:10px; font-weight: bold; font-size: 14px;"></p>
             
             <div class="progress-wrapper" id="progress-wrapper">
@@ -102,7 +120,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDCAHxbic6CnLgieNd6vr0UKtByIX9XI-0",
@@ -125,7 +143,7 @@
         
         let currentUser = null;
 
-        // LOGIN / LOGOUT LOGIC
+        // LOGIN / LOGOUT
         loginBtn.addEventListener('click', () => {
             loginBtn.disabled = true;
             loginBtn.innerText = "Opening Google...";
@@ -152,7 +170,7 @@
             }
         });
 
-        // FETCH AND RENDER ALL MODELS
+        // FETCH AND RENDER MODELS
         async function loadUserGallery(uid) {
             modelsGrid.innerHTML = "<p style='grid-column: 1 / -1; text-align: center; color: #64748b;'>Loading your models...</p>";
             
@@ -164,7 +182,7 @@
                 return;
             }
 
-            modelsGrid.innerHTML = ""; // Clear loading text
+            modelsGrid.innerHTML = ""; 
 
             querySnapshot.forEach((docSnap) => {
                 const data = docSnap.data();
@@ -175,17 +193,14 @@
                 const displayName = data.fileName ? data.fileName.replace('.glb', '') : 'My 3D Model';
                 const clientLink = `https://3dmosta.com/?id=${docId}`;
                 
-                // Alert class if they maxed out scans
                 const scanTextClass = (scansUsed >= maxScans) ? "alert" : "";
                 const scanText = (scansUsed >= maxScans) ? "Limit Reached" : `${scansUsed} / ${maxScans} Scans`;
 
-                // URL safe fix for viewing in the dashboard
                 let safeUrl = data.modelUrl;
                 if (safeUrl.includes('/o/models/')) {
                     safeUrl = safeUrl.replace('/o/models/', '/o/models%2F');
                 }
 
-                // CREATE THE CARD HTML
                 const card = document.createElement('div');
                 card.className = 'model-card';
                 card.innerHTML = `
@@ -215,11 +230,9 @@
 
                 modelsGrid.appendChild(card);
 
-                // Generate the QR Code directly into the card
                 const qrContainer = document.getElementById(`qr-${docId}`);
                 new QRCode(qrContainer, { text: clientLink, width: 120, height: 120 });
 
-                // Attach Download Logic to the specific button
                 document.getElementById(`downloadBtn-${docId}`).addEventListener('click', () => {
                     const canvas = qrContainer.querySelector('canvas');
                     const img = qrContainer.querySelector('img');
@@ -237,10 +250,12 @@
             });
         }
 
-        // UPLOAD LOGIC
+        // UPLOAD & PREVIEW LOGIC
         const fileInput = document.getElementById('fileInput');
         const uploadBtn = document.getElementById('uploadBtn');
         const statusText = document.getElementById('upload-status');
+        const previewContainer = document.getElementById('preview-container');
+        const localViewer = document.getElementById('local-viewer');
         const progressWrapper = document.getElementById('progress-wrapper');
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
@@ -248,14 +263,25 @@
         fileInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             statusText.innerText = "";
+            progressWrapper.style.display = 'none';
+            progressBar.style.width = '0%';
+            
             if (file) {
                 if (file.size > 50 * 1024 * 1024) {
                     statusText.innerText = "Error: File is too large! (Max 50MB)";
                     statusText.style.color = "red";
                     uploadBtn.style.display = 'none';
+                    previewContainer.style.display = 'none';
                     return; 
                 }
+                
+                // Show the local model in the previewer
+                localViewer.setAttribute('src', URL.createObjectURL(file));
+                previewContainer.style.display = 'block';
                 uploadBtn.style.display = 'inline-block';
+            } else {
+                previewContainer.style.display = 'none';
+                uploadBtn.style.display = 'none';
             }
         });
 
@@ -294,7 +320,6 @@
                             maxScans: 3,                   
                             createdAt: serverTimestamp()
                         });
-                        // Reload page to show the newly added model in the grid
                         location.reload(); 
                     });
                 }
