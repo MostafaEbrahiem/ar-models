@@ -186,6 +186,7 @@
         const modelsGrid = document.getElementById('models-grid');
         
         let currentUser = null;
+        let userIsPro = false; // NEW: Global memory variable to track Pro status
 
         loginBtn.addEventListener('click', () => {
             loginBtn.disabled = true;
@@ -219,10 +220,12 @@
             const q = query(collection(db, "clients"), where("uid", "==", uid));
             const querySnapshot = await getDocs(q);
 
-            let isPro = false;
-            querySnapshot.forEach(docSnap => { if(docSnap.data().maxScans > 3) isPro = true; });
+            userIsPro = false; // Reset on load
+            querySnapshot.forEach(docSnap => { 
+                if(docSnap.data().maxScans > 3) userIsPro = true; 
+            });
             
-            const maxModelsAllowed = isPro ? 10 : 1;
+            const maxModelsAllowed = userIsPro ? 10 : 1;
 
             if (querySnapshot.size >= maxModelsAllowed) {
                 document.getElementById('fileInput').style.display = 'none';
@@ -281,48 +284,40 @@
                     window.open(`fallback.html?model=${encodedUrl}`, '_blank');
                 });
 
-                // THE NEW DUAL-DOWNLOAD LOGIC
                 document.getElementById(`downloadBtn-${docId}`).addEventListener('click', () => {
                     const canvas = qrContainer.querySelector('canvas');
                     const img = qrContainer.querySelector('img');
                     let qrDataUrl = canvas ? canvas.toDataURL('image/png') : (img ? img.src : null);
 
                     if (qrDataUrl) {
-                        // 1. Download the single QR code
                         const linkSingle = document.createElement('a');
                         linkSingle.href = qrDataUrl;
                         linkSingle.download = `3Dmosta_${displayName}_Single_QR.png`;
                         linkSingle.click();
 
-                        // 2. Generate and download the 6x6 Grid version
                         const imgObj = new Image();
                         imgObj.onload = function() {
                             const gridCanvas = document.createElement('canvas');
                             const ctx = gridCanvas.getContext('2d');
                             
-                            // Setup Grid Dimensions
                             const qrSize = 150; 
-                            const padding = 30; // Space between QR codes
+                            const padding = 30; 
                             const cols = 6;
                             const rows = 6;
                             
                             gridCanvas.width = (qrSize + padding) * cols + padding;
                             gridCanvas.height = (qrSize + padding) * rows + padding;
                             
-                            // Fill background white for printing
                             ctx.fillStyle = '#ffffff';
                             ctx.fillRect(0, 0, gridCanvas.width, gridCanvas.height);
                             
-                            // Draw 36 QR Codes with cut lines
                             for (let r = 0; r < rows; r++) {
                                 for (let c = 0; c < cols; c++) {
                                     const x = padding + c * (qrSize + padding);
                                     const y = padding + r * (qrSize + padding);
                                     
-                                    // Draw the QR
                                     ctx.drawImage(imgObj, x, y, qrSize, qrSize);
                                     
-                                    // Draw dashed cut lines around each QR code
                                     ctx.strokeStyle = '#cbd5e1';
                                     ctx.lineWidth = 1;
                                     ctx.setLineDash([5, 5]);
@@ -332,7 +327,6 @@
                             
                             const gridDataUrl = gridCanvas.toDataURL('image/png');
                             
-                            // Delay slightly so the browser doesn't block the second download
                             setTimeout(() => {
                                 const linkGrid = document.createElement('a');
                                 linkGrid.href = gridDataUrl;
@@ -433,6 +427,10 @@
                 }, 
                 () => {
                     statusText.innerText = "Processing & Securing Link...";
+                    
+                    // NEW: Dynamically assign the scan limit based on their Pro status
+                    const startingScans = userIsPro ? 1000 : 3;
+
                     getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
                         await addDoc(collection(db, "clients"), {
                             uid: currentUser.uid,          
@@ -440,7 +438,7 @@
                             fileName: file.name,
                             modelUrl: downloadURL,
                             scanCount: 0,
-                            maxScans: 3,                   
+                            maxScans: startingScans,                   
                             createdAt: serverTimestamp()
                         });
                         location.reload(); 
