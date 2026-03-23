@@ -20,93 +20,121 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <style>
-        body { font-family: -apple-system, sans-serif; background-color: #f4f7f6; margin: 0; padding: 40px 20px; color: #333; }
-        .dashboard-container { max-width: 1000px; margin: 0 auto; }
+        :root {
+            --primary: #00d2ff;
+            --secondary: #3a7bd5;
+            --dark-bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        body { font-family: 'Inter', -apple-system, sans-serif; background-color: var(--dark-bg); color: var(--text-main); margin: 0; padding: 0; min-height: 100vh; }
+        .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% -20%, #1e293b, #0f172a); z-index: -1; }
+
+        /* NAVBAR */
+        .navbar { position: fixed; top: 0; left: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; box-sizing: border-box; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); z-index: 100; }
+        .nav-logo { font-size: 24px; font-weight: 800; color: white; text-decoration: none; letter-spacing: -1px; }
+        .nav-links { display: flex; gap: 25px; align-items: center; }
+        .nav-item { color: var(--text-dim); text-decoration: none; font-weight: 600; font-size: 15px; transition: color 0.2s; }
+        .nav-item:hover { color: white; }
+
+        /* DASHBOARD LAYOUT */
+        .dashboard-container { max-width: 1100px; margin: 100px auto 40px; padding: 0 20px; position: relative; z-index: 10; }
+        .glass-panel { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
         
-        .header-panel { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;}
-        .header-panel h2 { margin: 0; color: #2c3e50; }
+        .header-panel { padding: 30px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+        .header-panel h2 { margin: 0; color: white; font-size: 28px; }
+        .header-panel p { color: var(--text-dim); margin: 5px 0 0 0; }
         
-        #login-section { text-align: center; background: white; padding: 50px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); max-width: 400px; margin: 100px auto; }
+        #login-section { text-align: center; padding: 50px; max-width: 400px; margin: 150px auto; position: relative; z-index: 10; }
+        #login-section h2 { color: white; margin-top: 0; }
         #dashboard-ui { display: none; }
 
-        button { border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: bold; transition: 0.2s; }
-        .btn-google { background-color: #4285F4; color: white; width: 100%; font-size: 16px; margin-top: 15px;}
-        .btn-google:hover { background-color: #3367D6; }
-        .btn-upload { background-color: #007bff; color: white; }
-        .btn-upload:hover { background-color: #0056b3; }
-        .btn-logout { background-color: #e2e8f0; color: #475569; }
-        .btn-logout:hover { background-color: #cbd5e1; }
+        /* BUTTONS */
+        button { border: none; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-size: 15px; font-weight: bold; transition: all 0.2s; }
+        .btn-google { background: white; color: #333; width: 100%; font-size: 16px; margin-top: 15px; }
+        .btn-google:hover { background: #f8fafc; transform: translateY(-2px); }
         
-        /* New View Button */
-        .btn-view { background-color: #3b82f6; color: white; width: 100%; margin-top: 15px; }
-        .btn-view:hover { background-color: #2563eb; }
+        .btn-upload { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; }
+        .btn-upload:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(0, 210, 255, 0.4); }
         
-        /* Adjusted margins so they stack nicely */
-        .btn-download { background-color: #10b981; color: white; width: 100%; margin-top: 10px; }
-        .btn-download:hover { background-color: #059669; }
-        .btn-delete-model { background-color: #fee2e2; color: #ef4444; width: 100%; margin-top: 10px; }
-        .btn-delete-model:hover { background-color: #fecaca; }
-
-        .upload-area { background: #f8fafc; border: 2px dashed #cbd5e1; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 30px; }
-        input[type="file"] { margin: 10px 0; }
-        #preview-container { display: none; margin: 15px auto; max-width: 500px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: white; }
-        #preview-container model-viewer { width: 100%; height: 300px; margin-bottom: 0; border-radius: 0; }
+        .btn-logout { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
+        .btn-logout:hover { background: rgba(255, 255, 255, 0.2); }
         
-        #upload-limit-msg { display: none; padding: 20px; background: #fff3cd; color: #856404; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ffeeba; }
-
-        /* The Upgrade Button inside the Limit Warning */
-        .btn-upgrade-limit {
-            display: inline-block;
-            background: linear-gradient(135deg, #00d2ff, #3a7bd5);
-            color: white;
-            padding: 10px 24px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: bold;
-            margin-top: 15px;
-            border: none;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .btn-upgrade-limit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(0, 210, 255, 0.3);
-        }
-
-        .models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
-        .model-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center; display: flex; flex-direction: column; }
-        .model-card h3 { margin: 0 0 10px 0; font-size: 18px; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .btn-view { background: rgba(0, 210, 255, 0.1); color: var(--primary); border: 1px solid rgba(0, 210, 255, 0.3); width: 100%; margin-top: 15px; }
+        .btn-view:hover { background: var(--primary); color: #000; box-shadow: 0 0 15px rgba(0, 210, 255, 0.4); }
         
-        model-viewer { width: 100%; height: 250px; background-color: #f1f5f9; border-radius: 8px; margin-bottom: 15px; }
-        .stats { background: #e2e8f0; padding: 8px; border-radius: 6px; font-size: 14px; font-weight: bold; margin-bottom: 15px; color: #475569;}
-        .alert { color: #dc3545; }
+        .btn-download { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); width: 100%; margin-top: 10px; }
+        .btn-download:hover { background: #22c55e; color: #000; box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); }
+        
+        .btn-delete-model { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); width: 100%; margin-top: 10px; }
+        .btn-delete-model:hover { background: #ef4444; color: #fff; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
 
-        .progress-wrapper { display: none; margin-top: 15px; width: 100%; max-width: 400px; margin: 15px auto 0; }
-        .progress-bar-bg { background-color: #e2e8f0; border-radius: 5px; width: 100%; height: 10px; overflow: hidden; }
-        .progress-bar-fill { background-color: #007bff; width: 0%; height: 100%; transition: width 0.2s ease; }
-        .progress-text { margin-top: 8px; font-size: 12px; font-weight: bold; color: #64748b; }
+        /* UPLOAD AREA */
+        .upload-area { border: 2px dashed rgba(0, 210, 255, 0.3); padding: 40px 20px; text-align: center; margin-bottom: 40px; background: rgba(0,0,0,0.2); }
+        .upload-area h3 { color: white; margin-top: 0; font-size: 22px; }
+        input[type="file"] { margin: 15px 0; color: var(--text-main); }
+        
+        #preview-container { display: none; margin: 20px auto; max-width: 500px; border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
+        #preview-container model-viewer { width: 100%; height: 350px; background: transparent; }
+        
+        #upload-limit-msg { display: none; padding: 20px; background: rgba(234, 179, 8, 0.1); color: #facc15; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(234, 179, 8, 0.3); }
+
+        .btn-upgrade-limit { display: inline-block; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold; margin-top: 15px; transition: transform 0.2s, box-shadow 0.2s; }
+        .btn-upgrade-limit:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(0, 210, 255, 0.4); }
+
+        /* GALLERY GRID */
+        .models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; }
+        .model-card { padding: 25px; text-align: center; display: flex; flex-direction: column; }
+        .model-card h3 { margin: 0 0 15px 0; font-size: 20px; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        .model-card model-viewer { width: 100%; height: 250px; background-color: rgba(0,0,0,0.3); border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); }
+        
+        .stats { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; font-size: 14px; font-weight: bold; margin-bottom: 20px; color: var(--text-dim); border: 1px solid rgba(255,255,255,0.05);}
+        .alert { color: #ef4444; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
+
+        /* White wrapper to ensure QR code scans against dark background */
+        .qr-wrapper { background: white; padding: 15px; border-radius: 12px; display: inline-block; margin: 0 auto 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+
+        .progress-wrapper { display: none; margin-top: 20px; width: 100%; max-width: 400px; margin: 20px auto 0; }
+        .progress-bar-bg { background-color: rgba(255,255,255,0.1); border-radius: 99px; width: 100%; height: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+        .progress-bar-fill { background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%; height: 100%; transition: width 0.2s ease; box-shadow: 0 0 10px var(--primary); }
+        .progress-text { margin-top: 10px; font-size: 13px; font-weight: bold; color: var(--text-main); }
+
+        @media (max-width: 600px) { .navbar { padding: 15px 20px; } .nav-links { gap: 15px; } .dashboard-container { padding: 0 15px; } }
     </style>
 </head>
 <body>
 
-    <div id="login-section">
+    <div class="bg-glow"></div>
+
+    <nav class="navbar">
+        <a href="index.html" class="nav-logo">3Dmosta</a>
+        <div class="nav-links">
+            <a href="index.html#pricing" class="nav-item">Pricing</a>
+        </div>
+    </nav>
+
+    <div id="login-section" class="glass-panel">
         <h2>Creator Login</h2>
-        <p>Sign in to manage your 3D models and QR codes.</p>
+        <p>Sign in to manage your 3D models and AR codes.</p>
         <button id="loginBtn" class="btn-google">Sign in with Google</button>
     </div>
 
     <div id="dashboard-ui" class="dashboard-container">
         
-        <div class="header-panel">
+        <div class="header-panel glass-panel">
             <div>
                 <h2>My Models Gallery</h2>
-                <p style="margin: 5px 0 0 0; color: #64748b;">Manage your uploads and download your AR codes.</p>
+                <p>Manage your uploads and download your AR codes.</p>
             </div>
             <button id="logoutBtn" class="btn-logout">Sign Out</button>
         </div>
 
-        <div class="upload-area">
-            <h3 style="margin-top: 0;">Upload a New Model</h3>
-            <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">Max file size: 50MB (.glb only)</p>
+        <div class="upload-area glass-panel">
+            <h3>Upload a New Model</h3>
+            <p style="font-size: 14px; margin-bottom: 15px;">Max file size: 50MB (.glb only)</p>
             
             <div id="upload-limit-msg">
                 <p style="margin: 0;"><strong>Limit Reached:</strong> You have used your available free model slot. Delete the model below to make room, or unlock up to 10 active models with Pro.</p>
@@ -120,7 +148,7 @@
             </div>
 
             <button id="uploadBtn" class="btn-upload" style="display: none; margin: 15px auto 0;">Upload to Gallery</button>
-            <p id="upload-status" style="margin-top:10px; font-weight: bold; font-size: 14px;"></p>
+            <p id="upload-status" style="margin-top:15px; font-weight: bold; font-size: 14px;"></p>
             
             <div class="progress-wrapper" id="progress-wrapper">
                 <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-bar"></div></div>
@@ -186,7 +214,7 @@
         });
 
         async function loadUserGallery(uid) {
-            modelsGrid.innerHTML = "<p style='grid-column: 1 / -1; text-align: center; color: #64748b;'>Loading your models...</p>";
+            modelsGrid.innerHTML = "<p style='grid-column: 1 / -1; text-align: center; color: var(--text-dim);'>Loading your models...</p>";
             
             const q = query(collection(db, "clients"), where("uid", "==", uid));
             const querySnapshot = await getDocs(q);
@@ -205,7 +233,7 @@
             }
 
             if (querySnapshot.empty) {
-                modelsGrid.innerHTML = "<p style='grid-column: 1 / -1; text-align: center; color: #64748b;'>You haven't uploaded any models yet.</p>";
+                modelsGrid.innerHTML = "<p style='grid-column: 1 / -1; text-align: center; color: var(--text-dim);'>You haven't uploaded any models yet.</p>";
                 return;
             }
 
@@ -229,13 +257,14 @@
                 }
 
                 const card = document.createElement('div');
-                card.className = 'model-card';
+                card.className = 'model-card glass-panel';
                 card.innerHTML = `
                     <h3>${displayName}</h3>
                     <model-viewer src="${safeUrl}" crossorigin="anonymous" alt="3D model preview" auto-rotate camera-controls autoplay environment-image="neutral" shadow-intensity="1" camera-orbit="auto auto 500%" max-camera-orbit="auto auto 1000%"></model-viewer>
                     
                     <div class="stats ${scanTextClass}">${scanText}</div>
-                    <div id="qr-${docId}" style="display: flex; justify-content: center; margin-bottom: 10px;"></div>
+                    
+                    <div class="qr-wrapper" id="qr-${docId}"></div>
                     
                     <button id="viewBtn-${docId}" class="btn-view">View Fullscreen</button>
                     <button id="downloadBtn-${docId}" class="btn-download">Download QR</button>
@@ -245,9 +274,8 @@
                 modelsGrid.appendChild(card);
 
                 const qrContainer = document.getElementById(`qr-${docId}`);
-                new QRCode(qrContainer, { text: clientLink, width: 120, height: 120 });
+                new QRCode(qrContainer, { text: clientLink, width: 120, height: 120, colorDark : "#000000", colorLight : "#ffffff" });
 
-                // Event listener for the new View button (bypasses scan limit increment)
                 document.getElementById(`viewBtn-${docId}`).addEventListener('click', () => {
                     const encodedUrl = encodeURIComponent(data.modelUrl);
                     window.open(`fallback.html?model=${encodedUrl}`, '_blank');
@@ -303,22 +331,21 @@
             progressBar.style.width = '0%';
             
             if (file) {
-                // STRICT EXTENSION CHECK
                 if (!file.name.toLowerCase().endsWith('.glb')) {
                     statusText.innerText = "Error: Only .glb files are allowed!";
-                    statusText.style.color = "red";
+                    statusText.style.color = "#ef4444";
                     uploadBtn.style.display = 'none';
                     previewContainer.style.display = 'none';
-                    fileInput.value = ""; // Clear the bad file
+                    fileInput.value = ""; 
                     return; 
                 }
 
                 if (file.size > 50 * 1024 * 1024) {
                     statusText.innerText = "Error: File is too large! (Max 50MB)";
-                    statusText.style.color = "red";
+                    statusText.style.color = "#ef4444";
                     uploadBtn.style.display = 'none';
                     previewContainer.style.display = 'none';
-                    fileInput.value = ""; // Clear the bad file
+                    fileInput.value = ""; 
                     return; 
                 }
                 
@@ -337,7 +364,7 @@
             
             uploadBtn.disabled = true;
             fileInput.disabled = true;
-            statusText.style.color = "#007bff";
+            statusText.style.color = "var(--primary)";
             progressWrapper.style.display = 'block';
 
             const storageRef = ref(storage, 'models/' + currentUser.uid + '_' + file.name);
