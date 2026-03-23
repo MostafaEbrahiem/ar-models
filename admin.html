@@ -3,108 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Admin Dashboard</title>
+    <title>3Dmosta | Admin Command Center</title>
+
+    <link rel="icon" type="image/x-icon" href="favicon.ico?v=2">
+
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        
-        /* Login Card Styles */
-        .login-card { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; margin: 100px auto; text-align: center; }
-        .btn-google { background-color: #4285F4; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; margin-top: 20px; }
-        .btn-google:hover { background-color: #3367D6; }
-
-        /* Dashboard Styles */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-        h1 { margin: 0; font-size: 24px; color: #2c3e50; }
-        .stats-container { display: flex; gap: 15px; width: 100%; }
-        .stat-card { background: #007bff; color: white; padding: 20px; border-radius: 10px; flex: 1; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .stat-card h3 { margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
-        .stat-card p { margin: 0; font-size: 28px; font-weight: bold; }
-        .stat-card.dark { background: #2c3e50; }
-
-        .table-wrapper { background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { background-color: #f8f9fa; padding: 15px; border-bottom: 2px solid #e9ecef; color: #495057; }
-        td { padding: 15px; border-bottom: 1px solid #e9ecef; vertical-align: middle; }
-        tr:hover { background-color: #f8f9fa; }
-        
-        .scan-badge { background: #28a745; color: white; padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 14px; }
-        .alert-badge { background: #dc3545; } 
-        
-        .action-buttons { display: flex; gap: 10px; align-items: center; }
-        .link-btn { background: #e9ecef; color: #333; text-decoration: none; padding: 6px 12px; border-radius: 5px; font-size: 14px; transition: 0.2s; border: none; cursor: pointer; font-weight: bold; }
-        .link-btn:hover { background: #ced4da; }
-        .delete-btn { background: #dc3545; color: white; }
-        .delete-btn:hover { background: #c82333; }
-        .update-btn { background: #ffc107; color: #000; }
-        .update-btn:hover { background: #e0a800; }
-        .logout-btn { background: #6c757d; color: white; }
-        
-        .scans-input { width: 60px; padding: 6px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; text-align: center; }
-
-        @media (max-width: 800px) {
-            .stats-container { flex-direction: column; }
-            th, td { padding: 10px; font-size: 14px; }
-            .action-buttons { flex-direction: column; align-items: flex-start; }
+        :root {
+            --primary: #00d2ff;
+            --secondary: #3a7bd5;
+            --dark-bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
         }
+
+        body { font-family: 'Inter', -apple-system, sans-serif; background-color: var(--dark-bg); color: var(--text-main); margin: 0; padding: 0; min-height: 100vh; }
+        .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% -20%, #1e293b, #0f172a); z-index: -1; }
+
+        /* NAVBAR */
+        .navbar { position: fixed; top: 0; left: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; box-sizing: border-box; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); z-index: 100; }
+        .nav-logo { font-size: 24px; font-weight: 800; color: white; text-decoration: none; letter-spacing: -1px; }
+        .admin-badge { background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid rgba(239, 68, 68, 0.3); margin-left: 10px;}
+
+        /* LAYOUT */
+        .dashboard-container { max-width: 1100px; margin: 100px auto 40px; padding: 0 20px; position: relative; z-index: 10; }
+        .glass-panel { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+        
+        .header-panel { padding: 30px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+        .header-panel h2 { margin: 0; color: white; font-size: 28px; }
+        .header-panel p { color: var(--text-dim); margin: 5px 0 0 0; }
+        
+        #login-section, #denied-section { text-align: center; padding: 50px; max-width: 400px; margin: 150px auto; position: relative; z-index: 10; }
+        #login-section h2, #denied-section h2 { color: white; margin-top: 0; }
+        #dashboard-ui, #denied-section { display: none; }
+
+        /* BUTTONS */
+        button { border: none; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-size: 15px; font-weight: bold; transition: all 0.2s; }
+        .btn-google { background: white; color: #333; width: 100%; font-size: 16px; margin-top: 15px; }
+        .btn-google:hover { background: #f8fafc; transform: translateY(-2px); }
+        .btn-logout { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
+        .btn-logout:hover { background: rgba(255, 255, 255, 0.2); }
+        
+        .btn-upgrade { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; width: 100%; margin-top: 15px; }
+        .btn-upgrade:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(0, 210, 255, 0.4); }
+        
+        .btn-downgrade { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); width: 100%; margin-top: 10px; }
+        .btn-downgrade:hover { background: #ef4444; color: #fff; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+
+        /* USER GRID */
+        .users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
+        .user-card { padding: 25px; display: flex; flex-direction: column; }
+        .user-card h3 { margin: 0 0 5px 0; font-size: 18px; color: white; word-break: break-all; }
+        
+        .stats-box { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin: 15px 0; }
+        .stat-line { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: var(--text-dim); }
+        .stat-line strong { color: var(--text-main); }
+        
+        .badge-pro { background: rgba(34, 197, 94, 0.2); color: #4ade80; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .badge-free { background: rgba(255, 255, 255, 0.1); color: var(--text-dim); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid rgba(255, 255, 255, 0.2); }
+
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <div class="bg-glow"></div>
+
+    <nav class="navbar">
+        <div style="display: flex; align-items: center;">
+            <a href="index.html" class="nav-logo">3Dmosta</a>
+            <span class="admin-badge">ADMIN</span>
+        </div>
+    </nav>
+
+    <div id="login-section" class="glass-panel">
+        <h2>Admin Authentication</h2>
+        <p>Restricted access. Please sign in.</p>
+        <button id="loginBtn" class="btn-google">Sign in with Google</button>
+    </div>
+
+    <div id="denied-section" class="glass-panel">
+        <h2 style="color: #ef4444;">Access Denied</h2>
+        <p>Your account does not have administrator privileges.</p>
+        <button id="logoutDeniedBtn" class="btn-logout" style="margin-top: 15px; width: 100%;">Sign Out</button>
+    </div>
+
+    <div id="dashboard-ui" class="dashboard-container">
         
-        <div id="login-section" class="login-card" style="display: none;">
-            <h2>Admin Gateway</h2>
-            <p>Authorized personnel only.</p>
-            <button id="loginBtn" class="btn-google">Sign in with Google</button>
+        <div class="header-panel glass-panel">
+            <div>
+                <h2>User Management</h2>
+                <p>Monitor users and manage Pro subscriptions manually.</p>
+            </div>
+            <button id="logoutBtn" class="btn-logout">Sign Out</button>
         </div>
 
-        <div id="admin-dashboard" style="display: none;">
-            <div class="header">
-                <h1>Platform Admin</h1>
-                <button id="logoutBtn" class="link-btn logout-btn">Sign Out</button>
-            </div>
-
-            <div class="stats-container">
-                <div class="stat-card">
-                    <h3>Total Models</h3>
-                    <p id="total-models">0</p>
-                </div>
-                <div class="stat-card dark">
-                    <h3>Total Scans Used</h3>
-                    <p id="total-scans">0</p>
-                </div>
-            </div>
-
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Client Email</th>
-                            <th>Model Name</th>
-                            <th>Used / Max Scans</th>
-                            <th>Upgrade Limit</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body">
-                        <tr>
-                            <td colspan="5" style="text-align: center;">Loading data from database...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <div class="users-grid" id="users-grid"></div>
 
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, query, orderBy, deleteDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-
-        // *** YOUR SECURE ADMIN EMAIL ***
-        const ADMIN_EMAIL = "mostafaebrahiem1998@gmail.com"; 
+        import { getFirestore, collection, query, getDocs, doc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDCAHxbic6CnLgieNd6vr0UKtByIX9XI-0",
@@ -119,164 +119,127 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // UI Elements
+        const ADMIN_EMAIL = "mostafaebrahiem1998@gmail.com";
+
         const loginSec = document.getElementById('login-section');
-        const adminDash = document.getElementById('admin-dashboard');
-        const loginBtn = document.getElementById('loginBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-
-        let totalModelsCount = 0;
-        let totalScansCount = 0;
-
-        // Login Action
-        loginBtn.addEventListener('click', () => {
-            signInWithPopup(auth, new GoogleAuthProvider()).catch(err => alert("Login Failed: " + err.message));
+        const deniedSec = document.getElementById('denied-section');
+        const dashboardUI = document.getElementById('dashboard-ui');
+        const usersGrid = document.getElementById('users-grid');
+        
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            signInWithPopup(auth, new GoogleAuthProvider()).catch(err => alert(err.message));
         });
 
-        // Logout Action
-        logoutBtn.addEventListener('click', () => {
-            signOut(auth).then(() => location.reload());
-        });
+        document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth).then(() => location.reload()));
+        document.getElementById('logoutDeniedBtn').addEventListener('click', () => signOut(auth).then(() => location.reload()));
 
-        // THE BOUNCER: Security Check
         onAuthStateChanged(auth, async (user) => {
-            if (user && user.email === ADMIN_EMAIL) {
-                // SUCCESS: It is you!
-                loginSec.style.display = 'none';
-                adminDash.style.display = 'block';
-                loadDashboardData();
-            } else if (user) {
-                // FAIL: Someone else logged in. Kick them out.
-                alert(`Access Denied: ${user.email} does not have administrator privileges.`);
-                signOut(auth);
-                loginSec.style.display = 'block';
-                adminDash.style.display = 'none';
+            if (user) {
+                if (user.email === ADMIN_EMAIL) {
+                    loginSec.style.display = 'none';
+                    deniedSec.style.display = 'none';
+                    dashboardUI.style.display = 'block';
+                    loadAllUsers();
+                } else {
+                    loginSec.style.display = 'none';
+                    deniedSec.style.display = 'block';
+                    dashboardUI.style.display = 'none';
+                }
             } else {
-                // No one logged in
                 loginSec.style.display = 'block';
-                adminDash.style.display = 'none';
+                deniedSec.style.display = 'none';
+                dashboardUI.style.display = 'none';
             }
         });
 
-        async function loadDashboardData() {
-            const tableBody = document.getElementById('table-body');
+        async function loadAllUsers() {
+            usersGrid.innerHTML = "<p style='grid-column: 1 / -1; text-align: center; color: var(--text-dim);'>Fetching database...</p>";
             
-            try {
-                const q = query(collection(db, "clients"), orderBy("createdAt", "desc"));
-                const querySnapshot = await getDocs(q);
-                
-                tableBody.innerHTML = ''; 
-                totalModelsCount = 0;
-                totalScansCount = 0;
+            const q = query(collection(db, "clients"));
+            const snapshot = await getDocs(q);
 
-                if (querySnapshot.empty) {
-                    tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No models uploaded yet.</td></tr>';
-                    return;
-                }
-
-                querySnapshot.forEach((documentSnapshot) => {
-                    const data = documentSnapshot.data();
-                    const docId = documentSnapshot.id;
-                    
-                    const scansUsed = data.scanCount || 0;
-                    const maxScans = data.maxScans || 3; 
-                    const userEmail = data.userEmail || "Unknown (Old Upload)";
-                    const displayName = data.fileName ? data.fileName.replace('.glb', '') : 'Unnamed Model';
-                    
-                    totalModelsCount++;
-                    totalScansCount += scansUsed;
-
-                    const badgeClass = (scansUsed >= maxScans) ? "scan-badge alert-badge" : "scan-badge";
-
-                    const tr = document.createElement('tr');
-                    tr.id = `row-${docId}`;
-                    
-                    tr.innerHTML = `
-                        <td>${userEmail}</td>
-                        <td><strong>${displayName}</strong></td>
-                        <td><span class="${badgeClass}">${scansUsed}</span> / ${maxScans}</td>
-                        <td>
-                            <div class="action-buttons">
-                                <input type="number" id="input-${docId}" class="scans-input" value="${maxScans}" min="1">
-                                <button class="link-btn update-btn" data-id="${docId}">Save</button>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="action-buttons">
-                                <a href="https://3dmosta.com/?id=${docId}" target="_blank" class="link-btn" style="background: #007bff; color: white;">View</a>
-                                <button class="link-btn delete-btn" data-id="${docId}" data-name="${displayName}">Delete</button>
-                            </div>
-                        </td>
-                    `;
-                    tableBody.appendChild(tr);
-                });
-
-                document.getElementById('total-models').innerText = totalModelsCount;
-                document.getElementById('total-scans').innerText = totalScansCount;
-
-                attachActionListeners();
-
-            } catch (error) {
-                console.error("Error loading data: ", error);
-                tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Error loading data. Check console.</td></tr>`;
+            if (snapshot.empty) {
+                usersGrid.innerHTML = "<p style='grid-column: 1 / -1; text-align: center; color: var(--text-dim);'>No users found in database.</p>";
+                return;
             }
-        }
 
-        function attachActionListeners() {
-            const updateButtons = document.querySelectorAll('.update-btn');
-            updateButtons.forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    const docId = e.target.getAttribute('data-id');
-                    const inputField = document.getElementById(`input-${docId}`);
-                    const newMaxScans = parseInt(inputField.value);
-
-                    if (newMaxScans < 1) {
-                        alert("Max scans must be at least 1.");
-                        return;
-                    }
-
-                    e.target.innerText = "Saving...";
-                    e.target.style.opacity = "0.7";
-
-                    try {
-                        await updateDoc(doc(db, "clients", docId), {
-                            maxScans: newMaxScans
-                        });
-                        
-                        e.target.innerText = "Done!";
-                        e.target.style.background = "#28a745"; 
-                        e.target.style.color = "white";
-                        e.target.style.opacity = "1";
-                        
-                        setTimeout(() => { location.reload(); }, 1000);
-
-                    } catch (error) {
-                        console.error("Update error: ", error);
-                        alert("Failed to update scans.");
-                        e.target.innerText = "Save";
-                        e.target.style.opacity = "1";
-                    }
-                });
+            // Group models by User ID so we don't have duplicate cards for the same person
+            const usersMap = {};
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                const uid = data.uid;
+                
+                if (!usersMap[uid]) {
+                    usersMap[uid] = { email: data.userEmail, models: [], isPro: false };
+                }
+                usersMap[uid].models.push({ id: docSnap.id, ...data });
+                
+                // If they have a model with a limit higher than 3, they are Pro
+                if (data.maxScans > 3) usersMap[uid].isPro = true;
             });
 
-            const deleteButtons = document.querySelectorAll('.delete-btn');
-            deleteButtons.forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    const docId = e.target.getAttribute('data-id');
-                    const modelName = e.target.getAttribute('data-name');
+            usersGrid.innerHTML = ""; 
 
-                    if (confirm(`Are you sure you want to delete "${modelName}"?`)) {
-                        e.target.innerText = "Deleting...";
-                        try {
-                            await deleteDoc(doc(db, "clients", docId));
-                            document.getElementById(`row-${docId}`).remove();
-                        } catch (error) {
-                            console.error("Error deleting: ", error);
-                            alert("Failed to delete.");
-                            e.target.innerText = "Delete";
+            // Create a card for each user
+            Object.keys(usersMap).forEach(uid => {
+                const userData = usersMap[uid];
+                const statusBadge = userData.isPro 
+                    ? `<span class="badge-pro">PRO PLAN</span>` 
+                    : `<span class="badge-free">FREE TIER</span>`;
+
+                const card = document.createElement('div');
+                card.className = 'user-card glass-panel';
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <h3>${userData.email || 'Unknown Email'}</h3>
+                    </div>
+                    ${statusBadge}
+                    
+                    <div class="stats-box">
+                        <div class="stat-line"><span>Uploaded Models:</span> <strong>${userData.models.length}</strong></div>
+                        <div class="stat-line"><span>User ID:</span> <strong style="font-size: 11px;">${uid.substring(0,8)}...</strong></div>
+                    </div>
+                    
+                    <button id="upgrade-${uid}" class="btn-upgrade" ${userData.isPro ? 'style="display:none;"' : ''}>Grant Pro Access</button>
+                    <button id="downgrade-${uid}" class="btn-downgrade" ${!userData.isPro ? 'style="display:none;"' : ''}>Revoke Pro Access</button>
+                `;
+                usersGrid.appendChild(card);
+
+                // UPGRADE LOGIC (Updates all their models to 1000 scans)
+                if(!userData.isPro) {
+                    document.getElementById(`upgrade-${uid}`).addEventListener('click', async (e) => {
+                        if(confirm(`Are you sure you want to upgrade ${userData.email} to PRO?`)) {
+                            e.target.innerText = "Upgrading...";
+                            e.target.disabled = true;
+                            
+                            const batch = writeBatch(db);
+                            userData.models.forEach(model => {
+                                batch.update(doc(db, "clients", model.id), { maxScans: 1000 });
+                            });
+                            
+                            await batch.commit();
+                            location.reload();
                         }
-                    }
-                });
+                    });
+                }
+
+                // DOWNGRADE LOGIC (Reverts all their models to 3 scans)
+                if(userData.isPro) {
+                    document.getElementById(`downgrade-${uid}`).addEventListener('click', async (e) => {
+                        if(confirm(`Downgrade ${userData.email} back to the FREE tier?`)) {
+                            e.target.innerText = "Downgrading...";
+                            e.target.disabled = true;
+                            
+                            const batch = writeBatch(db);
+                            userData.models.forEach(model => {
+                                batch.update(doc(db, "clients", model.id), { maxScans: 3 });
+                            });
+                            
+                            await batch.commit();
+                            location.reload();
+                        }
+                    });
+                }
             });
         }
     </script>
