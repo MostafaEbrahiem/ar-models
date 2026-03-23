@@ -267,30 +267,80 @@
                     <div class="qr-wrapper" id="qr-${docId}"></div>
                     
                     <button id="viewBtn-${docId}" class="btn-view">View Fullscreen</button>
-                    <button id="downloadBtn-${docId}" class="btn-download">Download QR</button>
+                    <button id="downloadBtn-${docId}" class="btn-download">Download QR (Single & Grid)</button>
                     <button id="deleteBtn-${docId}" class="btn-delete-model">Delete Model</button>
                 `;
 
                 modelsGrid.appendChild(card);
 
                 const qrContainer = document.getElementById(`qr-${docId}`);
-                new QRCode(qrContainer, { text: clientLink, width: 120, height: 120, colorDark : "#000000", colorLight : "#ffffff" });
+                new QRCode(qrContainer, { text: clientLink, width: 150, height: 150, colorDark : "#000000", colorLight : "#ffffff" });
 
                 document.getElementById(`viewBtn-${docId}`).addEventListener('click', () => {
                     const encodedUrl = encodeURIComponent(data.modelUrl);
                     window.open(`fallback.html?model=${encodedUrl}`, '_blank');
                 });
 
+                // THE NEW DUAL-DOWNLOAD LOGIC
                 document.getElementById(`downloadBtn-${docId}`).addEventListener('click', () => {
                     const canvas = qrContainer.querySelector('canvas');
                     const img = qrContainer.querySelector('img');
-                    let imgUrl = canvas ? canvas.toDataURL('image/png') : (img ? img.src : null);
+                    let qrDataUrl = canvas ? canvas.toDataURL('image/png') : (img ? img.src : null);
 
-                    if (imgUrl) {
-                        const link = document.createElement('a');
-                        link.href = imgUrl;
-                        link.download = `3Dmosta_${displayName}_QR.png`;
-                        link.click();
+                    if (qrDataUrl) {
+                        // 1. Download the single QR code
+                        const linkSingle = document.createElement('a');
+                        linkSingle.href = qrDataUrl;
+                        linkSingle.download = `3Dmosta_${displayName}_Single_QR.png`;
+                        linkSingle.click();
+
+                        // 2. Generate and download the 6x6 Grid version
+                        const imgObj = new Image();
+                        imgObj.onload = function() {
+                            const gridCanvas = document.createElement('canvas');
+                            const ctx = gridCanvas.getContext('2d');
+                            
+                            // Setup Grid Dimensions
+                            const qrSize = 150; 
+                            const padding = 30; // Space between QR codes
+                            const cols = 6;
+                            const rows = 6;
+                            
+                            gridCanvas.width = (qrSize + padding) * cols + padding;
+                            gridCanvas.height = (qrSize + padding) * rows + padding;
+                            
+                            // Fill background white for printing
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(0, 0, gridCanvas.width, gridCanvas.height);
+                            
+                            // Draw 36 QR Codes with cut lines
+                            for (let r = 0; r < rows; r++) {
+                                for (let c = 0; c < cols; c++) {
+                                    const x = padding + c * (qrSize + padding);
+                                    const y = padding + r * (qrSize + padding);
+                                    
+                                    // Draw the QR
+                                    ctx.drawImage(imgObj, x, y, qrSize, qrSize);
+                                    
+                                    // Draw dashed cut lines around each QR code
+                                    ctx.strokeStyle = '#cbd5e1';
+                                    ctx.lineWidth = 1;
+                                    ctx.setLineDash([5, 5]);
+                                    ctx.strokeRect(x - padding/2, y - padding/2, qrSize + padding, qrSize + padding);
+                                }
+                            }
+                            
+                            const gridDataUrl = gridCanvas.toDataURL('image/png');
+                            
+                            // Delay slightly so the browser doesn't block the second download
+                            setTimeout(() => {
+                                const linkGrid = document.createElement('a');
+                                linkGrid.href = gridDataUrl;
+                                linkGrid.download = `3Dmosta_${displayName}_Grid_6x6_QR.png`;
+                                linkGrid.click();
+                            }, 500);
+                        };
+                        imgObj.src = qrDataUrl;
                     }
                 });
 
