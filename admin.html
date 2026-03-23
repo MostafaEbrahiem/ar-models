@@ -51,7 +51,7 @@
         .btn-downgrade:hover { background: #ef4444; color: #fff; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
 
         /* USER GRID */
-        .users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
+        .users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 30px; }
         .user-card { padding: 25px; display: flex; flex-direction: column; }
         .user-card h3 { margin: 0 0 5px 0; font-size: 18px; color: white; word-break: break-all; }
         
@@ -61,6 +61,25 @@
         
         .badge-pro { background: rgba(34, 197, 94, 0.2); color: #4ade80; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid rgba(34, 197, 94, 0.3); }
         .badge-free { background: rgba(255, 255, 255, 0.1); color: var(--text-dim); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid rgba(255, 255, 255, 0.2); }
+
+        /* INDIVIDUAL MODELS LIST */
+        .model-list { margin-top: 10px; max-height: 180px; overflow-y: auto; padding-right: 5px; }
+        /* Custom Scrollbar for model list */
+        .model-list::-webkit-scrollbar { width: 6px; }
+        .model-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 10px; }
+        .model-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+        .model-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.03); }
+        .model-item-info { display: flex; flex-direction: column; gap: 3px; overflow: hidden; }
+        .model-item-title { font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; color: white; }
+        .model-item-scans { font-size: 11px; color: var(--text-dim); }
+        
+        .model-actions { display: flex; gap: 6px; }
+        .btn-tiny { padding: 6px 10px; font-size: 11px; border-radius: 6px; }
+        .btn-tiny-view { background: rgba(0, 210, 255, 0.1); color: var(--primary); border: 1px solid rgba(0, 210, 255, 0.3); }
+        .btn-tiny-view:hover { background: var(--primary); color: #000; box-shadow: 0 0 10px rgba(0, 210, 255, 0.4); }
+        .btn-tiny-delete { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .btn-tiny-delete:hover { background: #ef4444; color: #fff; box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
 
     </style>
 </head>
@@ -92,7 +111,7 @@
         <div class="header-panel glass-panel">
             <div>
                 <h2>User Management</h2>
-                <p>Monitor users and manage Pro subscriptions manually.</p>
+                <p>Monitor users, view their models, and manage subscriptions.</p>
             </div>
             <button id="logoutBtn" class="btn-logout">Sign Out</button>
         </div>
@@ -104,7 +123,9 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFirestore, collection, query, getDocs, doc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, query, getDocs, doc, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        // Added Storage imports for deleting models
+        import { getStorage, ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDCAHxbic6CnLgieNd6vr0UKtByIX9XI-0",
@@ -118,6 +139,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const storage = getStorage(app);
 
         const ADMIN_EMAIL = "mostafaebrahiem1998@gmail.com";
 
@@ -163,7 +185,7 @@
                 return;
             }
 
-            // Group models by User ID so we don't have duplicate cards for the same person
+            // Group models by User ID
             const usersMap = {};
             snapshot.forEach(docSnap => {
                 const data = docSnap.data();
@@ -174,7 +196,6 @@
                 }
                 usersMap[uid].models.push({ id: docSnap.id, ...data });
                 
-                // If they have a model with a limit higher than 3, they are Pro
                 if (data.maxScans > 3) usersMap[uid].isPro = true;
             });
 
@@ -186,6 +207,29 @@
                 const statusBadge = userData.isPro 
                     ? `<span class="badge-pro">PRO PLAN</span>` 
                     : `<span class="badge-free">FREE TIER</span>`;
+
+                // Build the list of models for this user
+                let modelsHTML = '<div class="model-list">';
+                userData.models.forEach(model => {
+                    const displayName = model.fileName ? model.fileName.replace('.glb', '') : 'Unnamed Model';
+                    const scansUsed = model.scanCount || 0;
+                    const maxScans = model.maxScans || 3;
+                    const encodedUrl = encodeURIComponent(model.modelUrl);
+
+                    modelsHTML += `
+                        <div class="model-item" id="model-item-${model.id}">
+                            <div class="model-item-info">
+                                <span class="model-item-title" title="${displayName}">${displayName}</span>
+                                <span class="model-item-scans">Scans: ${scansUsed} / ${maxScans}</span>
+                            </div>
+                            <div class="model-actions">
+                                <button class="btn-tiny btn-tiny-view" onclick="window.open('fallback.html?model=${encodedUrl}', '_blank')">View</button>
+                                <button class="btn-tiny btn-tiny-delete delete-model-btn" data-id="${model.id}" data-uid="${uid}" data-filename="${model.fileName}" data-name="${displayName}">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                modelsHTML += '</div>';
 
                 const card = document.createElement('div');
                 card.className = 'user-card glass-panel';
@@ -200,46 +244,82 @@
                         <div class="stat-line"><span>User ID:</span> <strong style="font-size: 11px;">${uid.substring(0,8)}...</strong></div>
                     </div>
                     
-                    <button id="upgrade-${uid}" class="btn-upgrade" ${userData.isPro ? 'style="display:none;"' : ''}>Grant Pro Access</button>
-                    <button id="downgrade-${uid}" class="btn-downgrade" ${!userData.isPro ? 'style="display:none;"' : ''}>Revoke Pro Access</button>
+                    <strong style="font-size: 13px; color: var(--text-dim); margin-top: 5px;">User Files:</strong>
+                    ${modelsHTML}
+                    
+                    <div style="margin-top: 15px;">
+                        <button id="upgrade-${uid}" class="btn-upgrade" ${userData.isPro ? 'style="display:none;"' : ''}>Grant Pro Access</button>
+                        <button id="downgrade-${uid}" class="btn-downgrade" ${!userData.isPro ? 'style="display:none;"' : ''}>Revoke Pro Access</button>
+                    </div>
                 `;
                 usersGrid.appendChild(card);
 
-                // UPGRADE LOGIC (Updates all their models to 1000 scans)
+                // --- ATTACH EVENT LISTENERS ---
+
+                // Upgrade
                 if(!userData.isPro) {
                     document.getElementById(`upgrade-${uid}`).addEventListener('click', async (e) => {
                         if(confirm(`Are you sure you want to upgrade ${userData.email} to PRO?`)) {
                             e.target.innerText = "Upgrading...";
                             e.target.disabled = true;
-                            
                             const batch = writeBatch(db);
                             userData.models.forEach(model => {
                                 batch.update(doc(db, "clients", model.id), { maxScans: 1000 });
                             });
-                            
                             await batch.commit();
                             location.reload();
                         }
                     });
                 }
 
-                // DOWNGRADE LOGIC (Reverts all their models to 3 scans)
+                // Downgrade
                 if(userData.isPro) {
                     document.getElementById(`downgrade-${uid}`).addEventListener('click', async (e) => {
                         if(confirm(`Downgrade ${userData.email} back to the FREE tier?`)) {
                             e.target.innerText = "Downgrading...";
                             e.target.disabled = true;
-                            
                             const batch = writeBatch(db);
                             userData.models.forEach(model => {
                                 batch.update(doc(db, "clients", model.id), { maxScans: 3 });
                             });
-                            
                             await batch.commit();
                             location.reload();
                         }
                     });
                 }
+            });
+
+            // Delete Model Listener
+            document.querySelectorAll('.delete-model-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const docId = e.target.getAttribute('data-id');
+                    const fileUid = e.target.getAttribute('data-uid');
+                    const fileName = e.target.getAttribute('data-filename');
+                    const modelName = e.target.getAttribute('data-name');
+                    
+                    if(confirm(`ADMIN WARNING: Are you sure you want to permanently delete "${modelName}"? This cannot be undone.`)) {
+                        e.target.innerText = "...";
+                        e.target.disabled = true;
+                        
+                        try {
+                            // 1. Delete from Storage
+                            if (fileName) {
+                                const fileRef = ref(storage, `models/${fileUid}_${fileName}`);
+                                await deleteObject(fileRef).catch(err => console.warn("File missing in storage", err));
+                            }
+                            // 2. Delete from Database
+                            await deleteDoc(doc(db, "clients", docId));
+                            
+                            // 3. Remove from UI instantly without reloading
+                            document.getElementById(`model-item-${docId}`).remove();
+                        } catch(error) {
+                            console.error("Delete failed", error);
+                            alert("Failed to delete model. Check console.");
+                            e.target.innerText = "Delete";
+                            e.target.disabled = false;
+                        }
+                    }
+                });
             });
         }
     </script>
