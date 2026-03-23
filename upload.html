@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Models - Dashboard</title>
 
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-B80PCPRNQ9"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -26,7 +29,6 @@
         #login-section { text-align: center; background: white; padding: 50px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); max-width: 400px; margin: 100px auto; }
         #dashboard-ui { display: none; }
 
-        /* Buttons */
         button { border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: bold; transition: 0.2s; }
         .btn-google { background-color: #4285F4; color: white; width: 100%; font-size: 16px; margin-top: 15px;}
         .btn-google:hover { background-color: #3367D6; }
@@ -36,21 +38,16 @@
         .btn-logout:hover { background-color: #cbd5e1; }
         .btn-download { background-color: #10b981; color: white; width: 100%; margin-top: 15px; }
         .btn-download:hover { background-color: #059669; }
-        
-        /* The New Delete Button */
         .btn-delete-model { background-color: #fee2e2; color: #ef4444; width: 100%; margin-top: 10px; }
         .btn-delete-model:hover { background-color: #fecaca; }
 
-        /* Upload Area */
         .upload-area { background: #f8fafc; border: 2px dashed #cbd5e1; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 30px; }
         input[type="file"] { margin: 10px 0; }
         #preview-container { display: none; margin: 15px auto; max-width: 500px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: white; }
         #preview-container model-viewer { width: 100%; height: 300px; margin-bottom: 0; border-radius: 0; }
         
-        /* Limit Warning */
         #upload-limit-msg { display: none; padding: 15px; background: #fff3cd; color: #856404; border-radius: 8px; margin-bottom: 15px; }
 
-        /* The Gallery Grid */
         .models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
         .model-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center; display: flex; flex-direction: column; }
         .model-card h3 { margin: 0 0 10px 0; font-size: 18px; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -106,17 +103,14 @@
             </div>
         </div>
 
-        <div class="models-grid" id="models-grid">
-            </div>
+        <div class="models-grid" id="models-grid"></div>
 
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        // Added deleteObject for the Storage file deletion
         import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
-        // Added deleteDoc and doc for Database deletion
         import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -172,9 +166,7 @@
             const q = query(collection(db, "clients"), where("uid", "==", uid));
             const querySnapshot = await getDocs(q);
 
-            // -- SMART LIMIT CHECKER --
             let isPro = false;
-            // If they have any model with over 3 max scans, we assume you upgraded them to Pro.
             querySnapshot.forEach(docSnap => { if(docSnap.data().maxScans > 3) isPro = true; });
             
             const maxModelsAllowed = isPro ? 10 : 1;
@@ -242,21 +234,15 @@
                     }
                 });
 
-                // THE DELETE LOGIC
                 document.getElementById(`deleteBtn-${docId}`).addEventListener('click', async (e) => {
                     if (confirm("Are you sure you want to permanently delete this model? This will break any printed QR codes.")) {
                         e.target.innerText = "Deleting...";
                         e.target.disabled = true;
                         
                         try {
-                            // 1. Delete the actual .glb file from Storage
                             const fileRef = ref(storage, `models/${currentUser.uid}_${data.fileName}`);
                             await deleteObject(fileRef).catch(err => console.warn("File already gone from storage"));
-                            
-                            // 2. Delete the database record
                             await deleteDoc(doc(db, "clients", docId));
-                            
-                            // Reload to reset the limits
                             location.reload();
                         } catch (error) {
                             console.error(error);

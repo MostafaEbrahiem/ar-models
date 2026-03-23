@@ -7,6 +7,9 @@
     <title>3Dmosta | Enterprise-Grade 3D to Web AR Hosting</title>
     <meta name="description" content="The fastest way to host .glb models and generate trackable AR QR codes. No apps, no friction, just pure Web AR.">
 
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-B80PCPRNQ9"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -43,7 +46,7 @@
 
         /* HERO SECTION */
         .hero-box { background: var(--glass); backdrop-filter: blur(12px); padding: 60px 40px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1); max-width: 850px; width: 100%; margin-bottom: 60px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
-        .logo-gradient { font-size: 32px; font-weight: 800; background: linear-gradient(to right, var(--primary), var(--secondary)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; margin-bottom: 24px; display: inline-block; letter-spacing: -1px; }        
+        .logo-gradient { font-size: 32px; font-weight: 800; background: linear-gradient(to right, var(--primary), var(--secondary)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; margin-bottom: 24px; display: inline-block; letter-spacing: -1px; }
         h1 { font-size: clamp(32px, 5vw, 56px); margin-bottom: 20px; line-height: 1.1; font-weight: 800; letter-spacing: -0.02em; }
         .hero-box p { font-size: 20px; color: var(--text-dim); max-width: 600px; margin: 0 auto 40px; }
         .cta-btn { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; text-decoration: none; padding: 18px 36px; border-radius: 12px; font-size: 18px; font-weight: 700; transition: transform 0.2s, box-shadow 0.2s; display: inline-block; box-shadow: 0 10px 20px -5px rgba(0, 210, 255, 0.4); }
@@ -83,21 +86,8 @@
         .btn-pricing { display: block; text-align: center; background: rgba(255, 255, 255, 0.1); color: white; padding: 15px; border-radius: 12px; text-decoration: none; font-weight: bold; transition: 0.2s; }
         .btn-pricing:hover { background: rgba(255, 255, 255, 0.2); }
 
-        /* --- THE NEW FOOTER --- */
-        .footer {
-            width: 100%;
-            max-width: 1100px;
-            margin-top: auto; 
-            padding: 30px 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            color: var(--text-dim);
-            font-size: 14px;
-        }
+        /* THE FOOTER */
+        .footer { width: 100%; max-width: 1100px; margin-top: auto; padding: 30px 20px; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; color: var(--text-dim); font-size: 14px; }
         .footer-links { display: flex; gap: 20px; }
         .footer-links a { color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
         .footer-links a:hover { color: white; }
@@ -151,7 +141,6 @@
             <p class="section-subtitle">Choose the plan that fits your 3D workflow. Upgrade anytime.</p>
             
             <div class="pricing-grid">
-                
                 <div class="pricing-card">
                     <div class="tier-name">Starter</div>
                     <div class="tier-price">$0<span>/mo</span></div>
@@ -178,7 +167,6 @@
                     </ul>
                     <a href="mailto:mostafaebrahiem1998@gmail.com?subject=Upgrade%20to%20Business%20Plan" class="btn-pricing">Contact Sales</a>
                 </div>
-
             </div>
         </div>
 
@@ -190,7 +178,6 @@
                 <a href="mailto:mostafaebrahiem1998@gmail.com">Contact Support</a>
             </div>
         </footer>
-
     </div>
 
     <div id="scanner-page">
@@ -215,19 +202,11 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // -- PAYPAL SMART BUTTON LOGIC --
         if (window.paypal) {
             paypal.Buttons({
-                style: {
-                    shape: 'rect',
-                    color: 'gold',
-                    layout: 'vertical',
-                    label: 'subscribe'
-                },
+                style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'subscribe' },
                 createSubscription: function(data, actions) {
-                    return actions.subscription.create({
-                        plan_id: 'P-0P996054HY607042DNHAQBJI' 
-                    });
+                    return actions.subscription.create({ plan_id: 'P-0P996054HY607042DNHAQBJI' });
                 },
                 onApprove: function(data, actions) {
                     alert("Payment Successful! Subscription ID: " + data.subscriptionID + "\n\nPlease log in to your dashboard. Your account limits will be upgraded shortly.");
@@ -236,7 +215,6 @@
             }).render('#paypal-button-container-P-0P996054HY607042DNHAQBJI'); 
         }
 
-        // -- EXISTING ROUTER LOGIC --
         const landingPage = document.getElementById('landing-page');
         const scannerPage = document.getElementById('scanner-page');
         const scannerContent = document.getElementById('scanner-content');

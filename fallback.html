@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Viewer</title>
 
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-B80PCPRNQ9"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -18,14 +21,12 @@
     <style>
         body { margin: 0; padding: 0; background-color: #f4f7f6; overflow: hidden; height: 100vh; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; }
         #viewer-container { flex-grow: 1; width: 100%; height: 100%; position: relative; }
-        
         model-viewer { width: 100%; height: 100%; background-color: #eeeeee; }
         
         #error-message { color: #333; display: none; text-align: center; padding: 40px 20px; z-index: 10; position: absolute; top: 20%; width: 100%; box-sizing: border-box; }
         #error-message h2 { color: #dc3545; }
         #debug-text { font-family: monospace; font-size: 12px; color: #666; background: #fff; padding: 10px; border-radius: 5px; border: 1px solid #ccc; display: inline-block; max-width: 90%; word-break: break-all; margin-top: 20px; }
         
-        /* The Mobile Download Progress Bar */
         .progress-bar { display: block; width: 50%; height: 8px; position: absolute; left: 25%; top: 50%; transform: translateY(-50%); border-radius: 4px; box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1); background-color: rgba(255, 255, 255, 0.8); overflow: hidden;}
         .progress-bar.hide { visibility: hidden; transition: visibility 0.3s; }
         .update-bar { background-color: #007bff; width: 0%; height: 100%; transition: width 0.3s; }
@@ -66,7 +67,6 @@
         const debugText = document.getElementById('debug-text');
 
         if (modelUrl) {
-            // Encode fix for Firebase URLs
             if (modelUrl.includes('/o/models/')) {
                 modelUrl = modelUrl.replace('/o/models/', '/o/models%2F');
             }
@@ -77,19 +77,14 @@
                 const progressBar = viewer.querySelector('.progress-bar');
                 const updateBar = viewer.querySelector('.update-bar');
                 updateBar.style.width = `${event.detail.totalProgress * 100}%`;
-                
-                if (event.detail.totalProgress === 1) {
-                    progressBar.classList.add('hide');
-                } else {
-                    progressBar.classList.remove('hide');
-                }
+                if (event.detail.totalProgress === 1) progressBar.classList.add('hide');
+                else progressBar.classList.remove('hide');
             });
 
             viewer.addEventListener('error', (event) => {
                 viewer.style.display = 'none';
                 errorMsg.style.display = 'block';
                 debugText.innerText = "Attempted to load:\n" + modelUrl;
-                console.error("Model Viewer Error: ", event);
             });
 
         } else {
@@ -98,6 +93,5 @@
             debugText.innerText = "No model ID was found in the web address.";
         }
     </script>
-
 </body>
 </html>
