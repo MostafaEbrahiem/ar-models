@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Creator Dashboard</title>
+    <title>My Models - Dashboard</title>
 
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-B80PCPRNQ9"></script>
     <script>
@@ -15,92 +15,86 @@
 
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
     <style>
-        body { font-family: -apple-system, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; padding: 20px; color: #333; }
-        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
+        body { font-family: -apple-system, sans-serif; background-color: #f4f7f6; margin: 0; padding: 40px 20px; color: #333; }
+        .dashboard-container { max-width: 1000px; margin: 0 auto; }
         
-        #login-section, #upload-section, #dashboard-section { display: none; }
+        .header-panel { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;}
+        .header-panel h2 { margin: 0; color: #2c3e50; }
         
-        button { border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; margin-top: 10px; transition: 0.2s; }
-        .btn-google { background-color: #4285F4; color: white; }
-        .btn-google:hover { background-color: #3367D6; }
-        .btn-upload { background-color: #28a745; color: white; display: none; }
-        .btn-download { background-color: #17a2b8; color: white; margin-bottom: 20px; }
-        .btn-download:hover { background-color: #138496; }
-        .btn-logout { background-color: #dc3545; color: white; margin-top: 20px; }
-        
-        input[type="file"] { margin: 20px 0; padding: 10px; width: 100%; box-sizing: border-box; }
-        #preview-container { display: none; margin: 15px 0; border: 2px dashed #ccc; border-radius: 8px; overflow: hidden; background: #fafafa; }
-        model-viewer { width: 100%; height: 300px; }
-        
-        .stats-box { background: #e9ecef; padding: 15px; border-radius: 8px; margin: 20px 0; font-size: 18px; }
-        .alert { color: #dc3545; font-weight: bold; }
+        #login-section { text-align: center; background: white; padding: 50px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); max-width: 400px; margin: 100px auto; }
+        #dashboard-ui { display: none; }
 
-        .progress-wrapper { display: none; margin-top: 15px; width: 100%; }
-        .progress-bar-bg { background-color: #e9ecef; border-radius: 5px; width: 100%; height: 20px; overflow: hidden; }
+        /* Buttons */
+        button { border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: bold; transition: 0.2s; }
+        .btn-google { background-color: #4285F4; color: white; width: 100%; font-size: 16px; margin-top: 15px;}
+        .btn-google:hover { background-color: #3367D6; }
+        .btn-upload { background-color: #007bff; color: white; }
+        .btn-upload:hover { background-color: #0056b3; }
+        .btn-logout { background-color: #e2e8f0; color: #475569; }
+        .btn-logout:hover { background-color: #cbd5e1; }
+        .btn-download { background-color: #10b981; color: white; width: 100%; margin-top: 15px; }
+        .btn-download:hover { background-color: #059669; }
+
+        /* Upload Area */
+        .upload-area { background: #f8fafc; border: 2px dashed #cbd5e1; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 30px; }
+        input[type="file"] { margin: 10px 0; }
+        
+        /* The Gallery Grid */
+        .models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+        
+        /* Individual Model Card */
+        .model-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center; display: flex; flex-direction: column; }
+        .model-card h3 { margin: 0 0 10px 0; font-size: 18px; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        /* Embedded 3D Viewer */
+        model-viewer { width: 100%; height: 250px; background-color: #f1f5f9; border-radius: 8px; margin-bottom: 15px; }
+        
+        .stats { background: #e2e8f0; padding: 8px; border-radius: 6px; font-size: 14px; font-weight: bold; margin-bottom: 15px; color: #475569;}
+        .alert { color: #dc3545; }
+
+        /* Progress Bar */
+        .progress-wrapper { display: none; margin-top: 15px; width: 100%; max-width: 400px; margin: 15px auto 0; }
+        .progress-bar-bg { background-color: #e2e8f0; border-radius: 5px; width: 100%; height: 10px; overflow: hidden; }
         .progress-bar-fill { background-color: #007bff; width: 0%; height: 100%; transition: width 0.2s ease; }
-        .progress-text { margin-top: 8px; font-size: 14px; font-weight: bold; color: #555; }
+        .progress-text { margin-top: 8px; font-size: 12px; font-weight: bold; color: #64748b; }
     </style>
 </head>
 <body>
 
-    <div class="card">
+    <div id="login-section">
+        <h2>Creator Login</h2>
+        <p>Sign in to manage your 3D models and QR codes.</p>
+        <button id="loginBtn" class="btn-google">Sign in with Google</button>
+    </div>
+
+    <div id="dashboard-ui" class="dashboard-container">
         
-        <div id="login-section">
-            <h2>Welcome to AR Platform</h2>
-            <p>Sign in to upload and manage your 3D model.</p>
-            <button id="loginBtn" class="btn-google">Sign in with Google</button>
+        <div class="header-panel">
+            <div>
+                <h2>My Models Gallery</h2>
+                <p style="margin: 5px 0 0 0; color: #64748b;">Manage your uploads and download your AR codes.</p>
+            </div>
+            <button id="logoutBtn" class="btn-logout">Sign Out</button>
         </div>
 
-        <div id="upload-section">
-            <h2>Upload Your Model</h2>
-            <p>You are allowed <b>1 model</b> and <b>3 free scans</b>.</p>
-            <p style="font-size: 14px; color: #666;">Max file size: <b>50MB</b></p>
+        <div class="upload-area">
+            <h3 style="margin-top: 0;">Upload a New Model</h3>
+            <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">Max file size: 50MB (.glb only)</p>
+            
             <input type="file" id="fileInput" accept=".glb">
-            <div id="preview-container">
-                <model-viewer 
-                    id="local-viewer" 
-                    crossorigin="anonymous"
-                    alt="A 3D model preview"
-                    auto-rotate 
-                    camera-controls 
-                    autoplay
-                    environment-image="neutral"
-                    shadow-intensity="1"
-                    camera-orbit="auto auto 500%" 
-                    max-camera-orbit="auto auto 1000%">
-                </model-viewer>
-            </div>
-            <button id="uploadBtn" class="btn-upload">Confirm & Upload</button>
-            <p id="upload-status" style="margin-top:15px; font-weight: bold;"></p>
+            <button id="uploadBtn" class="btn-upload" style="display: none;">Upload to Gallery</button>
+            <p id="upload-status" style="margin-top:10px; font-weight: bold; font-size: 14px;"></p>
             
             <div class="progress-wrapper" id="progress-wrapper">
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" id="progress-bar"></div>
-                </div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-bar"></div></div>
                 <p class="progress-text" id="progress-text">0% Uploaded</p>
             </div>
         </div>
 
-        <div id="dashboard-section">
-            <h2>Your AR Model</h2>
-            <div class="stats-box">
-                Scans Used: <span id="scan-count-display">0</span> / <span id="max-scans-display">3</span>
+        <div class="models-grid" id="models-grid">
             </div>
-            <div id="limit-warning" class="alert" style="display:none;">
-                You have run out of free scans! Contact support to upgrade.
-            </div>
-            
-            <p style="margin-top: 20px;"><b>Your QR Code:</b></p>
-            <div id="qrcode" style="display: flex; justify-content: center; margin: 15px 0;"></div>
-            
-            <button id="downloadQrBtn" class="btn-download">Download QR Code</button>
-            <br>
-
-            <a id="client-link-display" href="#" target="_blank" style="color: #007bff; word-break: break-all;"></a>
-            
-            <button id="logoutBtn" class="btn-logout">Sign Out</button>
-        </div>
 
     </div>
 
@@ -108,7 +102,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDCAHxbic6CnLgieNd6vr0UKtByIX9XI-0",
@@ -125,13 +119,13 @@
         const db = getFirestore(app);
 
         const loginSec = document.getElementById('login-section');
-        const uploadSec = document.getElementById('upload-section');
-        const dashSec = document.getElementById('dashboard-section');
-        const statusText = document.getElementById('upload-status');
+        const dashboardUI = document.getElementById('dashboard-ui');
         const loginBtn = document.getElementById('loginBtn');
+        const modelsGrid = document.getElementById('models-grid');
         
         let currentUser = null;
 
+        // LOGIN / LOGOUT LOGIC
         loginBtn.addEventListener('click', () => {
             loginBtn.disabled = true;
             loginBtn.innerText = "Opening Google...";
@@ -150,64 +144,103 @@
             if (user) {
                 currentUser = user;
                 loginSec.style.display = 'none';
-                checkUserModels(user.uid);
+                dashboardUI.style.display = 'block';
+                loadUserGallery(user.uid);
             } else {
                 loginSec.style.display = 'block';
-                uploadSec.style.display = 'none';
-                dashSec.style.display = 'none';
+                dashboardUI.style.display = 'none';
             }
         });
 
-        async function checkUserModels(uid) {
+        // FETCH AND RENDER ALL MODELS
+        async function loadUserGallery(uid) {
+            modelsGrid.innerHTML = "<p style='grid-column: 1 / -1; text-align: center; color: #64748b;'>Loading your models...</p>";
+            
             const q = query(collection(db, "clients"), where("uid", "==", uid));
             const querySnapshot = await getDocs(q);
 
-            if (!querySnapshot.empty) {
-                const userDoc = querySnapshot.docs[0];
-                const data = userDoc.data();
-                const docId = userDoc.id;
+            if (querySnapshot.empty) {
+                modelsGrid.innerHTML = "<p style='grid-column: 1 / -1; text-align: center; color: #64748b;'>You haven't uploaded any models yet.</p>";
+                return;
+            }
+
+            modelsGrid.innerHTML = ""; // Clear loading text
+
+            querySnapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                const docId = docSnap.id;
                 
-                uploadSec.style.display = 'none';
-                dashSec.style.display = 'block';
-                
+                const scansUsed = data.scanCount || 0;
                 const maxScans = data.maxScans || 3;
-                document.getElementById('scan-count-display').innerText = data.scanCount || 0;
-                document.getElementById('max-scans-display').innerText = maxScans;
+                const displayName = data.fileName ? data.fileName.replace('.glb', '') : 'My 3D Model';
+                const clientLink = `https://3dmosta.com/?id=${docId}`;
                 
-                if ((data.scanCount || 0) >= maxScans) {
-                    document.getElementById('limit-warning').style.display = 'block';
+                // Alert class if they maxed out scans
+                const scanTextClass = (scansUsed >= maxScans) ? "alert" : "";
+                const scanText = (scansUsed >= maxScans) ? "Limit Reached" : `${scansUsed} / ${maxScans} Scans`;
+
+                // URL safe fix for viewing in the dashboard
+                let safeUrl = data.modelUrl;
+                if (safeUrl.includes('/o/models/')) {
+                    safeUrl = safeUrl.replace('/o/models/', '/o/models%2F');
                 }
 
-                const clientLink = `https://3dmosta.com/?id=${docId}`;
-                document.getElementById('client-link-display').href = clientLink;
-                document.getElementById('client-link-display').innerText = clientLink;
+                // CREATE THE CARD HTML
+                const card = document.createElement('div');
+                card.className = 'model-card';
+                card.innerHTML = `
+                    <h3>${displayName}</h3>
+                    
+                    <model-viewer 
+                        src="${safeUrl}" 
+                        crossorigin="anonymous"
+                        alt="3D model preview"
+                        auto-rotate 
+                        camera-controls 
+                        autoplay
+                        environment-image="neutral"
+                        shadow-intensity="1"
+                        camera-orbit="auto auto 500%" 
+                        max-camera-orbit="auto auto 1000%">
+                    </model-viewer>
+                    
+                    <div class="stats ${scanTextClass}">
+                        ${scanText}
+                    </div>
 
-                document.getElementById("qrcode").innerHTML = "";
-                new QRCode(document.getElementById("qrcode"), { text: clientLink, width: 150, height: 150 });
+                    <div id="qr-${docId}" style="display: flex; justify-content: center; margin-bottom: 10px;"></div>
+                    
+                    <button id="downloadBtn-${docId}" class="btn-download">Download QR</button>
+                `;
 
-            } else {
-                dashSec.style.display = 'none';
-                uploadSec.style.display = 'block';
-            }
+                modelsGrid.appendChild(card);
+
+                // Generate the QR Code directly into the card
+                const qrContainer = document.getElementById(`qr-${docId}`);
+                new QRCode(qrContainer, { text: clientLink, width: 120, height: 120 });
+
+                // Attach Download Logic to the specific button
+                document.getElementById(`downloadBtn-${docId}`).addEventListener('click', () => {
+                    const canvas = qrContainer.querySelector('canvas');
+                    const img = qrContainer.querySelector('img');
+                    let imgUrl = canvas ? canvas.toDataURL('image/png') : (img ? img.src : null);
+
+                    if (imgUrl) {
+                        const link = document.createElement('a');
+                        link.href = imgUrl;
+                        link.download = `3Dmosta_${displayName}_QR.png`;
+                        link.click();
+                    } else {
+                        alert("Please wait a moment for the QR code to finish generating.");
+                    }
+                });
+            });
         }
 
-        document.getElementById('downloadQrBtn').addEventListener('click', () => {
-            const qrCanvas = document.querySelector('#qrcode canvas');
-            const qrImg = document.querySelector('#qrcode img');
-            let imgUrl = qrCanvas ? qrCanvas.toDataURL('image/png') : (qrImg ? qrImg.src : null);
-
-            if (imgUrl) {
-                const link = document.createElement('a');
-                link.href = imgUrl;
-                link.download = '3Dmosta_QR_Code.png';
-                link.click();
-            }
-        });
-
+        // UPLOAD LOGIC
         const fileInput = document.getElementById('fileInput');
         const uploadBtn = document.getElementById('uploadBtn');
-        const previewContainer = document.getElementById('preview-container');
-        const localViewer = document.getElementById('local-viewer');
+        const statusText = document.getElementById('upload-status');
         const progressWrapper = document.getElementById('progress-wrapper');
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
@@ -217,19 +250,22 @@
             statusText.innerText = "";
             if (file) {
                 if (file.size > 50 * 1024 * 1024) {
-                    statusText.innerText = "Error: File is too large!";
+                    statusText.innerText = "Error: File is too large! (Max 50MB)";
+                    statusText.style.color = "red";
+                    uploadBtn.style.display = 'none';
                     return; 
                 }
-                localViewer.setAttribute('src', URL.createObjectURL(file));
-                previewContainer.style.display = 'block';
-                uploadBtn.style.display = 'block';
+                uploadBtn.style.display = 'inline-block';
             }
         });
 
         uploadBtn.addEventListener('click', () => {
             const file = fileInput.files[0];
             if (!file || !currentUser) return;
+            
             uploadBtn.disabled = true;
+            fileInput.disabled = true;
+            statusText.style.color = "#007bff";
             progressWrapper.style.display = 'block';
 
             const storageRef = ref(storage, 'models/' + currentUser.uid + '_' + file.name);
@@ -239,10 +275,15 @@
                 (snapshot) => {
                     const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                     progressBar.style.width = Math.round(progress) + '%';
-                    progressText.innerText = Math.round(progress) + '% Uploaded';
+                    progressText.innerText = Math.round(progress) + '% Uploading...';
                 }, 
-                (error) => { alert(error.message); uploadBtn.disabled = false; }, 
+                (error) => { 
+                    alert("Upload failed: " + error.message); 
+                    uploadBtn.disabled = false; 
+                    fileInput.disabled = false;
+                }, 
                 () => {
+                    statusText.innerText = "Processing & Securing Link...";
                     getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
                         await addDoc(collection(db, "clients"), {
                             uid: currentUser.uid,          
@@ -253,6 +294,7 @@
                             maxScans: 3,                   
                             createdAt: serverTimestamp()
                         });
+                        // Reload page to show the newly added model in the grid
                         location.reload(); 
                     });
                 }
