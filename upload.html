@@ -36,27 +36,29 @@
         .btn-logout:hover { background-color: #cbd5e1; }
         .btn-download { background-color: #10b981; color: white; width: 100%; margin-top: 15px; }
         .btn-download:hover { background-color: #059669; }
+        
+        /* The New Delete Button */
+        .btn-delete-model { background-color: #fee2e2; color: #ef4444; width: 100%; margin-top: 10px; }
+        .btn-delete-model:hover { background-color: #fecaca; }
 
-        /* Upload Area & Preview */
+        /* Upload Area */
         .upload-area { background: #f8fafc; border: 2px dashed #cbd5e1; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 30px; }
         input[type="file"] { margin: 10px 0; }
         #preview-container { display: none; margin: 15px auto; max-width: 500px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: white; }
         #preview-container model-viewer { width: 100%; height: 300px; margin-bottom: 0; border-radius: 0; }
         
+        /* Limit Warning */
+        #upload-limit-msg { display: none; padding: 15px; background: #fff3cd; color: #856404; border-radius: 8px; margin-bottom: 15px; }
+
         /* The Gallery Grid */
         .models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
-        
-        /* Individual Model Card */
         .model-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center; display: flex; flex-direction: column; }
         .model-card h3 { margin: 0 0 10px 0; font-size: 18px; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         
-        /* Embedded 3D Viewer */
         model-viewer { width: 100%; height: 250px; background-color: #f1f5f9; border-radius: 8px; margin-bottom: 15px; }
-        
         .stats { background: #e2e8f0; padding: 8px; border-radius: 6px; font-size: 14px; font-weight: bold; margin-bottom: 15px; color: #475569;}
         .alert { color: #dc3545; }
 
-        /* Progress Bar */
         .progress-wrapper { display: none; margin-top: 15px; width: 100%; max-width: 400px; margin: 15px auto 0; }
         .progress-bar-bg { background-color: #e2e8f0; border-radius: 5px; width: 100%; height: 10px; overflow: hidden; }
         .progress-bar-fill { background-color: #007bff; width: 0%; height: 100%; transition: width 0.2s ease; }
@@ -85,21 +87,14 @@
             <h3 style="margin-top: 0;">Upload a New Model</h3>
             <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">Max file size: 50MB (.glb only)</p>
             
+            <div id="upload-limit-msg">
+                <strong>Limit Reached:</strong> You have used your available model slots. Delete a model below to make room, or upgrade to Pro.
+            </div>
+
             <input type="file" id="fileInput" accept=".glb">
             
             <div id="preview-container">
-                <model-viewer 
-                    id="local-viewer" 
-                    crossorigin="anonymous"
-                    alt="A 3D model preview"
-                    auto-rotate 
-                    camera-controls 
-                    autoplay
-                    environment-image="neutral"
-                    shadow-intensity="1"
-                    camera-orbit="auto auto 500%" 
-                    max-camera-orbit="auto auto 1000%">
-                </model-viewer>
+                <model-viewer id="local-viewer" crossorigin="anonymous" alt="A 3D model preview" auto-rotate camera-controls autoplay environment-image="neutral" shadow-intensity="1" camera-orbit="auto auto 500%" max-camera-orbit="auto auto 1000%"></model-viewer>
             </div>
 
             <button id="uploadBtn" class="btn-upload" style="display: none; margin: 15px auto 0;">Upload to Gallery</button>
@@ -119,8 +114,10 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        // Added deleteObject for the Storage file deletion
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+        // Added deleteDoc and doc for Database deletion
+        import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDCAHxbic6CnLgieNd6vr0UKtByIX9XI-0",
@@ -143,7 +140,6 @@
         
         let currentUser = null;
 
-        // LOGIN / LOGOUT
         loginBtn.addEventListener('click', () => {
             loginBtn.disabled = true;
             loginBtn.innerText = "Opening Google...";
@@ -170,12 +166,26 @@
             }
         });
 
-        // FETCH AND RENDER MODELS
         async function loadUserGallery(uid) {
             modelsGrid.innerHTML = "<p style='grid-column: 1 / -1; text-align: center; color: #64748b;'>Loading your models...</p>";
             
             const q = query(collection(db, "clients"), where("uid", "==", uid));
             const querySnapshot = await getDocs(q);
+
+            // -- SMART LIMIT CHECKER --
+            let isPro = false;
+            // If they have any model with over 3 max scans, we assume you upgraded them to Pro.
+            querySnapshot.forEach(docSnap => { if(docSnap.data().maxScans > 3) isPro = true; });
+            
+            const maxModelsAllowed = isPro ? 10 : 1;
+
+            if (querySnapshot.size >= maxModelsAllowed) {
+                document.getElementById('fileInput').style.display = 'none';
+                document.getElementById('upload-limit-msg').style.display = 'block';
+            } else {
+                document.getElementById('fileInput').style.display = 'block';
+                document.getElementById('upload-limit-msg').style.display = 'none';
+            }
 
             if (querySnapshot.empty) {
                 modelsGrid.innerHTML = "<p style='grid-column: 1 / -1; text-align: center; color: #64748b;'>You haven't uploaded any models yet.</p>";
@@ -205,27 +215,13 @@
                 card.className = 'model-card';
                 card.innerHTML = `
                     <h3>${displayName}</h3>
+                    <model-viewer src="${safeUrl}" crossorigin="anonymous" alt="3D model preview" auto-rotate camera-controls autoplay environment-image="neutral" shadow-intensity="1" camera-orbit="auto auto 500%" max-camera-orbit="auto auto 1000%"></model-viewer>
                     
-                    <model-viewer 
-                        src="${safeUrl}" 
-                        crossorigin="anonymous"
-                        alt="3D model preview"
-                        auto-rotate 
-                        camera-controls 
-                        autoplay
-                        environment-image="neutral"
-                        shadow-intensity="1"
-                        camera-orbit="auto auto 500%" 
-                        max-camera-orbit="auto auto 1000%">
-                    </model-viewer>
-                    
-                    <div class="stats ${scanTextClass}">
-                        ${scanText}
-                    </div>
-
+                    <div class="stats ${scanTextClass}">${scanText}</div>
                     <div id="qr-${docId}" style="display: flex; justify-content: center; margin-bottom: 10px;"></div>
                     
                     <button id="downloadBtn-${docId}" class="btn-download">Download QR</button>
+                    <button id="deleteBtn-${docId}" class="btn-delete-model">Delete Model</button>
                 `;
 
                 modelsGrid.appendChild(card);
@@ -243,14 +239,36 @@
                         link.href = imgUrl;
                         link.download = `3Dmosta_${displayName}_QR.png`;
                         link.click();
-                    } else {
-                        alert("Please wait a moment for the QR code to finish generating.");
+                    }
+                });
+
+                // THE DELETE LOGIC
+                document.getElementById(`deleteBtn-${docId}`).addEventListener('click', async (e) => {
+                    if (confirm("Are you sure you want to permanently delete this model? This will break any printed QR codes.")) {
+                        e.target.innerText = "Deleting...";
+                        e.target.disabled = true;
+                        
+                        try {
+                            // 1. Delete the actual .glb file from Storage
+                            const fileRef = ref(storage, `models/${currentUser.uid}_${data.fileName}`);
+                            await deleteObject(fileRef).catch(err => console.warn("File already gone from storage"));
+                            
+                            // 2. Delete the database record
+                            await deleteDoc(doc(db, "clients", docId));
+                            
+                            // Reload to reset the limits
+                            location.reload();
+                        } catch (error) {
+                            console.error(error);
+                            alert("Failed to delete model. Please try again.");
+                            e.target.innerText = "Delete Model";
+                            e.target.disabled = false;
+                        }
                     }
                 });
             });
         }
 
-        // UPLOAD & PREVIEW LOGIC
         const fileInput = document.getElementById('fileInput');
         const uploadBtn = document.getElementById('uploadBtn');
         const statusText = document.getElementById('upload-status');
@@ -275,7 +293,6 @@
                     return; 
                 }
                 
-                // Show the local model in the previewer
                 localViewer.setAttribute('src', URL.createObjectURL(file));
                 previewContainer.style.display = 'block';
                 uploadBtn.style.display = 'inline-block';
