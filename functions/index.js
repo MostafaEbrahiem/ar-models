@@ -1,4 +1,4 @@
-const functions = require("firebase-functions");
+const { onRequest } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const Replicate = require("replicate");
 
@@ -8,7 +8,7 @@ const db = admin.firestore();
 // ==========================================
 // 1. THE PAYPAL WEBHOOK 
 // ==========================================
-exports.paypalWebhook = functions.https.onRequest(async (req, res) => {
+exports.paypalWebhook = onRequest(async (req, res) => {
     try {
         const payerEmail = req.body.resource.subscriber.email_address;
         if (!payerEmail) return res.status(400).send("No email found");
@@ -31,23 +31,13 @@ exports.paypalWebhook = functions.https.onRequest(async (req, res) => {
 // ==========================================
 // 2. THE NEW AI 3D GENERATOR
 // ==========================================
-exports.generate3DModel = functions
-    .runWith({
-        timeoutSeconds: 300, 
-        memory: "1GB" // Boosted memory to prevent crashing
-    })
-    .https.onRequest(async (req, res) => {
-        // BULLETPROOF CORS HANDSHAKE
-        res.set('Access-Control-Allow-Origin', '*');
-        res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        res.set('Access-Control-Allow-Headers', 'Content-Type');
-
-        // Handle pre-flight requests immediately
-        if (req.method === 'OPTIONS') {
-            res.status(204).send('');
-            return;
-        }
-
+exports.generate3DModel = onRequest(
+    { 
+        timeoutSeconds: 300,  // 5 full minutes before server gives up
+        memory: "1GiB",       // Boosted memory so the AI connection doesn't crash
+        cors: true            // Automatically handles the browser handshake!
+    }, 
+    async (req, res) => {
         try {
             const { imageUrl } = req.body;
             
@@ -81,4 +71,5 @@ exports.generate3DModel = functions
             console.error("AI Generation Error:", error);
             res.status(500).send({ error: "Replicate Error: " + error.message });
         }
-    });
+    }
+);
