@@ -303,11 +303,7 @@
                 const scanTextClass = (scansUsed >= maxScans) ? "alert" : "";
                 const scanText = (scansUsed >= maxScans) ? "Limit Reached" : `${scansUsed} / ${maxScans} Scans`;
 
-                // ==========================================
-                // EMERGENCY FIX: BULLETPROOF URL EXTRACTOR
-                // ==========================================
                 let rawUrl = data.modelUrl;
-                
                 if (Array.isArray(rawUrl)) {
                     rawUrl = rawUrl[0];
                 } else if (rawUrl && typeof rawUrl === 'object') {
@@ -319,7 +315,6 @@
                 if (safeUrl.includes('/o/models/')) {
                     safeUrl = safeUrl.replace('/o/models/', '/o/models%2F');
                 }
-                // ==========================================
 
                 const card = document.createElement('div');
                 card.className = 'model-card glass-panel';
@@ -415,9 +410,6 @@
             });
         }
 
-        // ==========================================
-        // MANUAL UPLOAD & PREVIEW LOGIC
-        // ==========================================
         fileInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             statusText.innerText = "";
@@ -495,7 +487,7 @@
         });
 
         // ==========================================
-        // THE AI GENERATOR LOGIC
+        // THE NEW AI GENERATOR LOGIC
         // ==========================================
         const aiInput = document.getElementById('aiImageInput');
         const aiPreview = document.getElementById('aiImagePreview');
@@ -557,15 +549,37 @@
                 const data = await response.json();
                 if (data.error) throw new Error(data.error);
 
+                aiProgressText.innerText = "90% - Securing Model to your Storage...";
+
+                // --- NEW DELIVERY STEP ---
+                // Extract the exact Replicate URL regardless of how they format it
+                let replicateUrl = data.glbUrl;
+                if (Array.isArray(replicateUrl)) replicateUrl = replicateUrl[0];
+                else if (typeof replicateUrl === 'object') replicateUrl = replicateUrl.mesh || replicateUrl.glb || Object.values(replicateUrl)[0];
+
+                // Fetch the actual .glb file from Replicate
+                const modelFetch = await fetch(replicateUrl);
+                const modelBlob = await modelFetch.blob();
+
+                // Upload the .glb to your own Firebase Storage so you own it forever
+                const safeFileName = "AI_Gen_" + Date.now() + ".glb";
+                const permanentStorageRef = ref(storage, 'models/' + currentUser.uid + '_' + safeFileName);
+                await uploadBytesResumable(permanentStorageRef, modelBlob);
+                
+                // Get the final, secure Firebase link
+                const permanentDownloadUrl = await getDownloadURL(permanentStorageRef);
+                // -------------------------
+
                 clearInterval(progressInterval);
                 aiProgressBar.style.width = '100%';
                 aiProgressText.innerText = "100% - Saving to Gallery!";
 
+                // Save your permanent Firebase link to the database
                 await addDoc(collection(db, "clients"), {
                     uid: currentUser.uid,          
                     userEmail: currentUser.email,  
-                    fileName: "AI_Gen_" + file.name.split('.')[0] + ".glb",
-                    modelUrl: data.glbUrl,
+                    fileName: safeFileName,
+                    modelUrl: permanentDownloadUrl,
                     scanCount: 0,
                     maxScans: 1000,               
                     createdAt: serverTimestamp()
