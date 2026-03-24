@@ -1,7 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const Replicate = require("replicate");
-const cors = require("cors")({ origin: true }); 
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -32,8 +31,23 @@ exports.paypalWebhook = functions.https.onRequest(async (req, res) => {
 // ==========================================
 // 2. THE NEW AI 3D GENERATOR
 // ==========================================
-exports.generate3DModel = functions.https.onRequest((req, res) => {
-    cors(req, res, async () => {
+exports.generate3DModel = functions
+    .runWith({
+        timeoutSeconds: 300, 
+        memory: "1GB" // Boosted memory to prevent crashing
+    })
+    .https.onRequest(async (req, res) => {
+        // BULLETPROOF CORS HANDSHAKE
+        res.set('Access-Control-Allow-Origin', '*');
+        res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+        // Handle pre-flight requests immediately
+        if (req.method === 'OPTIONS') {
+            res.status(204).send('');
+            return;
+        }
+
         try {
             const { imageUrl } = req.body;
             
@@ -45,11 +59,10 @@ exports.generate3DModel = functions.https.onRequest((req, res) => {
                 auth: process.env.REPLICATE_API_TOKEN, 
             });
 
-            console.log("Sending image to Tencent Hunyuan3D-2...");
+            console.log("Sending image to Tencent Hunyuan-3D-3.1...");
 
-            // Call the state-of-the-art Tencent Hunyuan3D-2 model
             const output = await replicate.run(
-                "tencent/hunyuan3d-2",
+                "tencent/hunyuan-3d-3.1",
                 {
                     input: {
                         image: imageUrl,
@@ -59,10 +72,9 @@ exports.generate3DModel = functions.https.onRequest((req, res) => {
                 }
             );
 
-            // Replicate returns the URL to the newly generated model
             const finalModelUrl = output.mesh || output; 
-            
             console.log("Success! GLB generated:", finalModelUrl);
+            
             res.status(200).send({ glbUrl: finalModelUrl });
 
         } catch (error) {
@@ -70,4 +82,3 @@ exports.generate3DModel = functions.https.onRequest((req, res) => {
             res.status(500).send({ error: "Replicate Error: " + error.message });
         }
     });
-});
