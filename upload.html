@@ -167,15 +167,19 @@
 
                 <div id="ai-unlocked" style="display: none; width: 100%;">
                     <input type="file" id="aiImageInput" accept="image/png, image/jpeg, image/jpg">
-                    
                     <img id="aiImagePreview" style="display: none; width: 100%; height: 200px; object-fit: contain; background: rgba(0,0,0,0.5); border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1);">
-
                     <button id="generateAIBtn" class="btn-upload" style="background: linear-gradient(135deg, #a855f7, #ec4899); margin-top: 10px; width: 80%; display: none;">Generate 3D Model</button>
                     
                     <div class="progress-wrapper" id="ai-progress-wrapper" style="width: 100%;">
                         <div class="progress-bar-bg"><div class="progress-bar-fill" id="ai-progress-bar" style="background: linear-gradient(90deg, #a855f7, #ec4899); box-shadow: 0 0 10px #ec4899;"></div></div>
                         <p class="progress-text" id="ai-progress-text" style="color: #ec4899;">0% - Initializing AI...</p>
                     </div>
+
+                    <div id="ai-preview-container" style="display: none; margin: 15px auto; width: 100%; border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);">
+                        <model-viewer id="ai-local-viewer" crossorigin="anonymous" alt="AI Model Preview" auto-rotate camera-controls autoplay environment-image="neutral" shadow-intensity="1" style="width: 100%; height: 300px; outline: none; background: transparent;"></model-viewer>
+                    </div>
+                    
+                    <button id="aiSaveBtn" class="btn-upload" style="background: linear-gradient(135deg, #10b981, #059669); display: none; margin-top: 10px; width: 80%;">Confirm & Save to Gallery</button>
 
                     <p style="font-size: 11px; color: var(--text-dim); margin-top: 15px;">Powered by Tencent Hunyuan-3D-3.1</p>
                 </div>
@@ -211,15 +215,6 @@
         const dashboardUI = document.getElementById('dashboard-ui');
         const loginBtn = document.getElementById('loginBtn');
         const modelsGrid = document.getElementById('models-grid');
-        
-        const previewContainer = document.getElementById('preview-container');
-        const localViewer = document.getElementById('local-viewer');
-        const uploadBtn = document.getElementById('uploadBtn');
-        const statusText = document.getElementById('upload-status');
-        const fileInput = document.getElementById('fileInput');
-        const progressWrapper = document.getElementById('progress-wrapper');
-        const progressBar = document.getElementById('progress-bar');
-        const progressText = document.getElementById('progress-text');
         
         let currentUser = null;
         let userIsPro = false; 
@@ -311,7 +306,6 @@
                 }
 
                 let safeUrl = String(rawUrl || "");
-
                 if (safeUrl.includes('/o/models/')) {
                     safeUrl = safeUrl.replace('/o/models/', '/o/models%2F');
                 }
@@ -410,6 +404,18 @@
             });
         }
 
+        // ==========================================
+        // MANUAL UPLOAD & PREVIEW LOGIC
+        // ==========================================
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('preview-container');
+        const localViewer = document.getElementById('local-viewer');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const statusText = document.getElementById('upload-status');
+        const progressWrapper = document.getElementById('progress-wrapper');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+
         fileInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             statusText.innerText = "";
@@ -487,18 +493,29 @@
         });
 
         // ==========================================
-        // THE NEW AI GENERATOR LOGIC
+        // THE NEW TWO-STEP AI GENERATOR LOGIC
         // ==========================================
         const aiInput = document.getElementById('aiImageInput');
         const aiPreview = document.getElementById('aiImagePreview');
         const generateBtn = document.getElementById('generateAIBtn');
+        
         const aiProgressWrapper = document.getElementById('ai-progress-wrapper');
         const aiProgressBar = document.getElementById('ai-progress-bar');
         const aiProgressText = document.getElementById('ai-progress-text');
+        
+        const aiPreviewContainer = document.getElementById('ai-preview-container');
+        const aiLocalViewer = document.getElementById('ai-local-viewer');
+        const aiSaveBtn = document.getElementById('aiSaveBtn');
 
+        // Global variables to hold data between steps
+        let currentAiGeneratedUrl = null;
+        let originalImageName = "ai_model";
+
+        // Step 1: Show 2D Image Preview
         aiInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if(file) {
+                originalImageName = file.name;
                 aiPreview.src = URL.createObjectURL(file);
                 aiPreview.style.display = 'block';
                 generateBtn.style.display = 'block';
@@ -508,6 +525,7 @@
             }
         });
 
+        // Step 2: Generate the 3D Model and show it in the Preview Window
         generateBtn.addEventListener('click', async () => {
             const file = aiInput.files[0];
             if(!file) return;
@@ -549,32 +567,67 @@
                 const data = await response.json();
                 if (data.error) throw new Error(data.error);
 
-                aiProgressText.innerText = "90% - Securing Model to your Storage...";
-
-                // --- NEW DELIVERY STEP ---
-                // Extract the exact Replicate URL regardless of how they format it
+                // Extract the exact Replicate URL
                 let replicateUrl = data.glbUrl;
                 if (Array.isArray(replicateUrl)) replicateUrl = replicateUrl[0];
                 else if (typeof replicateUrl === 'object') replicateUrl = replicateUrl.mesh || replicateUrl.glb || Object.values(replicateUrl)[0];
 
-                // Fetch the actual .glb file from Replicate
-                const modelFetch = await fetch(replicateUrl);
-                const modelBlob = await modelFetch.blob();
-
-                // Upload the .glb to your own Firebase Storage so you own it forever
-                const safeFileName = "AI_Gen_" + Date.now() + ".glb";
-                const permanentStorageRef = ref(storage, 'models/' + currentUser.uid + '_' + safeFileName);
-                await uploadBytesResumable(permanentStorageRef, modelBlob);
-                
-                // Get the final, secure Firebase link
-                const permanentDownloadUrl = await getDownloadURL(permanentStorageRef);
-                // -------------------------
+                currentAiGeneratedUrl = replicateUrl;
 
                 clearInterval(progressInterval);
-                aiProgressBar.style.width = '100%';
-                aiProgressText.innerText = "100% - Saving to Gallery!";
+                aiProgressWrapper.style.display = 'none';
 
-                // Save your permanent Firebase link to the database
+                // Display the interactive 3D model BEFORE saving!
+                aiPreviewContainer.style.display = 'block';
+                aiLocalViewer.src = currentAiGeneratedUrl;
+                aiSaveBtn.style.display = 'block';
+
+            } catch (error) {
+                clearInterval(progressInterval);
+                console.error(error);
+                alert("AI Error: " + error.message);
+                
+                aiProgressWrapper.style.display = 'none';
+                aiInput.style.display = 'block';
+                generateBtn.style.display = 'block';
+                aiProgressBar.style.width = '0%';
+            }
+        });
+
+        // Step 3: Explicitly Download as GLB and Save to Firebase
+        aiSaveBtn.addEventListener('click', async () => {
+            if(!currentAiGeneratedUrl) return;
+
+            aiSaveBtn.disabled = true;
+            aiSaveBtn.innerText = "Securing file... Please wait";
+            
+            aiProgressWrapper.style.display = 'block';
+            aiProgressBar.style.width = '50%';
+            aiProgressText.innerText = "Downloading model from AI server...";
+
+            try {
+                // Fetch the actual file from Replicate
+                const modelFetch = await fetch(currentAiGeneratedUrl);
+                const rawBlob = await modelFetch.blob();
+
+                // EMERGENCY FIX: We explicitly wrap the file in a STRICT 'model/gltf-binary' MIME type.
+                // Firebase is no longer allowed to guess that it is an HTML file.
+                const securedModelBlob = new Blob([rawBlob], { type: 'model/gltf-binary' });
+
+                aiProgressBar.style.width = '75%';
+                aiProgressText.innerText = "Uploading to your secure Storage...";
+
+                const safeFileName = "AI_Gen_" + Date.now() + "_" + originalImageName.split('.')[0] + ".glb";
+                const permanentStorageRef = ref(storage, 'models/' + currentUser.uid + '_' + safeFileName);
+                
+                // Upload to Firebase while explicitly telling it what the file type is
+                await uploadBytesResumable(permanentStorageRef, securedModelBlob, { contentType: 'model/gltf-binary' });
+                const permanentDownloadUrl = await getDownloadURL(permanentStorageRef);
+
+                aiProgressBar.style.width = '100%';
+                aiProgressText.innerText = "Added to Gallery successfully!";
+
+                // Save to Firestore Database
                 await addDoc(collection(db, "clients"), {
                     uid: currentUser.uid,          
                     userEmail: currentUser.email,  
@@ -588,14 +641,10 @@
                 location.reload(); 
 
             } catch (error) {
-                clearInterval(progressInterval);
-                console.error(error);
-                alert("AI Error: " + error.message);
-                
-                aiProgressWrapper.style.display = 'none';
-                aiInput.style.display = 'block';
-                generateBtn.style.display = 'block';
-                aiProgressBar.style.width = '0%';
+                console.error("Save Error:", error);
+                alert("Failed to save model: " + error.message);
+                aiSaveBtn.disabled = false;
+                aiSaveBtn.innerText = "Confirm & Save to Gallery";
             }
         });
     </script>
