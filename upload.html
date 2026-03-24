@@ -75,9 +75,9 @@
         .action-area h3 { color: white; margin-top: 0; font-size: 20px; }
 
         /* ========================================= */
-        /* NEW CUSTOM FILE INPUT STYLES */
+        /* CUSTOM FILE INPUT STYLES */
         /* ========================================= */
-        input[type="file"] { display: none; } /* Hides the ugly default button */
+        input[type="file"] { display: none; } 
         
         .custom-file-upload {
             display: flex;
@@ -313,7 +313,7 @@
 
             userIsPro = false; 
             querySnapshot.forEach(docSnap => { 
-                if(docSnap.data().maxScans > 3) userIsPro = true; 
+                if(docSnap.data().maxScans > 100) userIsPro = true; 
             });
 
             const userRef = doc(db, "users", uid);
@@ -325,14 +325,14 @@
                     uid: currentUser.uid,
                     isPro: userIsPro,
                     aiGenerationsUsed: 0,
-                    aiGenerationsAllowed: 10,
-                    maxScans: userIsPro ? 1000 : 3
+                    aiGenerationsAllowed: userIsPro ? 10 : 0,
+                    maxScans: userIsPro ? 1000 : 100
                 });
                 userSnap = await getDoc(userRef);
             }
 
             const aiUsed = userSnap.data().aiGenerationsUsed || 0;
-            const aiAllowed = userSnap.data().aiGenerationsAllowed || 10;
+            const aiAllowed = userSnap.data().aiGenerationsAllowed || 0; // Default to 0 unless pro
             
             if(userIsPro) {
                 document.getElementById('ai-locked').style.display = 'none';
@@ -390,7 +390,7 @@
                 const docId = docSnap.id;
                 
                 const scansUsed = data.scanCount || 0;
-                const maxScans = data.maxScans || 3;
+                const maxScans = data.maxScans || 100;
                 const displayName = data.fileName ? data.fileName.replace('.glb', '') : 'My 3D Model';
                 const clientLink = `https://3dmosta.com/?id=${docId}`;
                 
@@ -503,9 +503,6 @@
             });
         }
 
-        // ==========================================
-        // MANUAL UPLOAD & PREVIEW LOGIC
-        // ==========================================
         const fileInput = document.getElementById('fileInput');
         const manualFileName = document.getElementById('manual-file-name');
         const previewContainer = document.getElementById('preview-container');
@@ -583,7 +580,7 @@
                 }, 
                 () => {
                     statusText.innerText = "Processing & Securing Link...";
-                    const startingScans = userIsPro ? 1000 : 3;
+                    const startingScans = userIsPro ? 1000 : 100;
 
                     getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
                         await addDoc(collection(db, "clients"), {
@@ -601,9 +598,6 @@
             );
         });
 
-        // ==========================================
-        // THE NEW TWO-STEP AI GENERATOR LOGIC
-        // ==========================================
         const aiInput = document.getElementById('aiImageInput');
         const aiFileName = document.getElementById('ai-file-name');
         const aiPreview = document.getElementById('aiImagePreview');
@@ -638,7 +632,6 @@
             const file = aiInput.files[0];
             if(!file) return;
 
-            // Hide the custom label wrappers during generation
             document.getElementById('ai-upload-wrapper').style.display = 'none';
             generateBtn.style.display = 'none';
             aiProgressWrapper.style.display = 'block';
@@ -709,13 +702,14 @@
             aiSaveBtn.innerText = "Adding to Gallery... Please wait";
 
             try {
+                const startingScans = userIsPro ? 1000 : 100;
                 await addDoc(collection(db, "clients"), {
                     uid: currentUser.uid,          
                     userEmail: currentUser.email,  
                     fileName: currentAiFileName,
                     modelUrl: currentAiGeneratedUrl,
                     scanCount: 0,
-                    maxScans: 1000,               
+                    maxScans: startingScans,               
                     createdAt: serverTimestamp()
                 });
 

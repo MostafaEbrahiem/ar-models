@@ -60,25 +60,26 @@ exports.generate3DModel = onRequest(
             const userDoc = await userRef.get();
             
             let aiUsed = 0;
-            let aiAllowed = 10; // Default 10 for Pro
+            let aiAllowed = 0; // Default to 0 for safety
 
             if (userDoc.exists) {
                 aiUsed = userDoc.data().aiGenerationsUsed || 0;
-                aiAllowed = userDoc.data().aiGenerationsAllowed || 10;
+                aiAllowed = userDoc.data().aiGenerationsAllowed || 0;
                 
                 if (aiUsed >= aiAllowed) {
                     return res.status(403).send({ error: `Limit Reached: You have used all ${aiAllowed} of your AI generations.` });
                 }
             } else {
-                // First time generating! Create their profile.
+                // First time generating and no profile exists! Create their FREE profile.
                 await userRef.set({
                     userEmail: userEmail || "unknown",
                     uid: uid,
-                    isPro: true,
+                    isPro: false,
                     aiGenerationsUsed: 0,
-                    aiGenerationsAllowed: 10,
-                    maxScans: 1000
+                    aiGenerationsAllowed: 0, // Free users get 0 AI models
+                    maxScans: 100 // New Free Tier default
                 });
+                return res.status(403).send({ error: "Limit Reached: You have 0 AI generations on the Free plan." });
             }
             // ------------------------------------------------
 
