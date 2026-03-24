@@ -73,7 +73,48 @@
 
         .action-area { border: 2px dashed rgba(255, 255, 255, 0.2); padding: 30px 20px; text-align: center; background: rgba(0,0,0,0.2); display: flex; flex-direction: column; justify-content: center; align-items: center;}
         .action-area h3 { color: white; margin-top: 0; font-size: 20px; }
-        input[type="file"] { margin: 15px 0; color: var(--text-main); font-size: 14px; width: 100%;}
+
+        /* ========================================= */
+        /* NEW CUSTOM FILE INPUT STYLES */
+        /* ========================================= */
+        input[type="file"] { display: none; } /* Hides the ugly default button */
+        
+        .custom-file-upload {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 20px;
+            cursor: pointer;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            color: var(--text-main);
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.2s;
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 10px;
+        }
+        .custom-file-upload:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .custom-file-upload.ai-style:hover {
+            border-color: #ec4899;
+            color: #ec4899;
+        }
+        .file-name-display {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-top: 8px;
+            text-align: center;
+            word-break: break-all;
+            min-height: 15px;
+        }
+        /* ========================================= */
         
         #preview-container { display: none; margin: 20px auto; width: 100%; border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
         #preview-container model-viewer { width: 100%; height: 300px; background: transparent; outline: none; }
@@ -140,7 +181,14 @@
                     <a href="index.html#pricing" class="btn-upgrade-limit">Upgrade to Pro ($15/mo)</a>
                 </div>
 
-                <input type="file" id="fileInput" accept=".glb">
+                <div id="manual-upload-wrapper" style="width: 100%;">
+                    <label for="fileInput" class="custom-file-upload" id="fileInputLabel">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        Choose .glb File
+                    </label>
+                    <input type="file" id="fileInput" accept=".glb">
+                    <div id="manual-file-name" class="file-name-display"></div>
+                </div>
                 
                 <div id="preview-container">
                     <model-viewer id="local-viewer" crossorigin="anonymous" alt="A 3D model preview" auto-rotate camera-controls autoplay environment-image="neutral" shadow-intensity="1" camera-orbit="auto auto 500%" max-camera-orbit="auto auto 1000%"></model-viewer>
@@ -166,7 +214,16 @@
                 </div>
 
                 <div id="ai-unlocked" style="display: none; width: 100%;">
-                    <input type="file" id="aiImageInput" accept="image/png, image/jpeg, image/jpg">
+                    
+                    <div id="ai-upload-wrapper" style="width: 100%;">
+                        <label for="aiImageInput" class="custom-file-upload ai-style" id="aiInputLabel">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            Select Image
+                        </label>
+                        <input type="file" id="aiImageInput" accept="image/png, image/jpeg, image/jpg">
+                        <div id="ai-file-name" class="file-name-display"></div>
+                    </div>
+
                     <img id="aiImagePreview" style="display: none; width: 100%; height: 200px; object-fit: contain; background: rgba(0,0,0,0.5); border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1);">
                     
                     <button id="generateAIBtn" class="btn-upload" style="background: linear-gradient(135deg, #a855f7, #ec4899); margin-top: 10px; width: 80%; display: none;">Generate 3D Model</button>
@@ -195,7 +252,6 @@
     </div>
 
     <script type="module">
-        // NEW: Imported setDoc and getDoc for User Limits
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
@@ -260,14 +316,10 @@
                 if(docSnap.data().maxScans > 3) userIsPro = true; 
             });
 
-            // ==========================================
-            // NEW LIMIT CHECK LOGIC
-            // ==========================================
             const userRef = doc(db, "users", uid);
             let userSnap = await getDoc(userRef);
 
             if (!userSnap.exists()) {
-                // First time setup for this user in the users table
                 await setDoc(userRef, {
                     userEmail: currentUser.email,
                     uid: currentUser.uid,
@@ -281,7 +333,6 @@
 
             const aiUsed = userSnap.data().aiGenerationsUsed || 0;
             const aiAllowed = userSnap.data().aiGenerationsAllowed || 10;
-            // ==========================================
             
             if(userIsPro) {
                 document.getElementById('ai-locked').style.display = 'none';
@@ -289,7 +340,6 @@
                 document.getElementById('ai-unlocked').style.flexDirection = 'column';
                 document.getElementById('ai-unlocked').style.alignItems = 'center';
 
-                // UPDATE UI TEXT AND LOCK BUTTON IF NEEDED
                 const aiStatusTxt = document.getElementById('aiLimitStatus');
                 if (aiStatusTxt) {
                     aiStatusTxt.innerText = `Generations Used: ${aiUsed} / ${aiAllowed}`;
@@ -315,7 +365,7 @@
             const maxModelsAllowed = userIsPro ? 10 : 1;
 
             if (querySnapshot.size >= maxModelsAllowed) {
-                document.getElementById('fileInput').style.display = 'none';
+                document.getElementById('manual-upload-wrapper').style.display = 'none';
                 document.getElementById('upload-limit-msg').style.display = 'block';
                 if (userIsPro) {
                     const aiUnlocked = document.getElementById('ai-unlocked');
@@ -324,7 +374,7 @@
                     }
                 }
             } else {
-                document.getElementById('fileInput').style.display = 'block';
+                document.getElementById('manual-upload-wrapper').style.display = 'block';
                 document.getElementById('upload-limit-msg').style.display = 'none';
             }
 
@@ -347,7 +397,6 @@
                 const scanTextClass = (scansUsed >= maxScans) ? "alert" : "";
                 const scanText = (scansUsed >= maxScans) ? "Limit Reached" : `${scansUsed} / ${maxScans} Scans`;
 
-                // Array Fix
                 let rawUrl = data.modelUrl;
                 if (Array.isArray(rawUrl)) {
                     rawUrl = rawUrl[0];
@@ -458,6 +507,7 @@
         // MANUAL UPLOAD & PREVIEW LOGIC
         // ==========================================
         const fileInput = document.getElementById('fileInput');
+        const manualFileName = document.getElementById('manual-file-name');
         const previewContainer = document.getElementById('preview-container');
         const localViewer = document.getElementById('local-viewer');
         const uploadBtn = document.getElementById('uploadBtn');
@@ -473,6 +523,8 @@
             progressBar.style.width = '0%';
             
             if (file) {
+                manualFileName.innerText = file.name;
+
                 if (!file.name.toLowerCase().endsWith('.glb')) {
                     statusText.innerText = "Error: Only .glb files are allowed!";
                     statusText.style.color = "#ef4444";
@@ -495,6 +547,7 @@
                 previewContainer.style.display = 'block';
                 uploadBtn.style.display = 'inline-block';
             } else {
+                manualFileName.innerText = "";
                 previewContainer.style.display = 'none';
                 uploadBtn.style.display = 'none';
             }
@@ -506,6 +559,9 @@
             
             uploadBtn.disabled = true;
             fileInput.disabled = true;
+            document.getElementById('fileInputLabel').style.opacity = "0.5";
+            document.getElementById('fileInputLabel').style.cursor = "not-allowed";
+
             statusText.style.color = "var(--primary)";
             progressWrapper.style.display = 'block';
 
@@ -522,6 +578,8 @@
                     alert("Upload failed: " + error.message); 
                     uploadBtn.disabled = false; 
                     fileInput.disabled = false;
+                    document.getElementById('fileInputLabel').style.opacity = "1";
+                    document.getElementById('fileInputLabel').style.cursor = "pointer";
                 }, 
                 () => {
                     statusText.innerText = "Processing & Securing Link...";
@@ -547,6 +605,7 @@
         // THE NEW TWO-STEP AI GENERATOR LOGIC
         // ==========================================
         const aiInput = document.getElementById('aiImageInput');
+        const aiFileName = document.getElementById('ai-file-name');
         const aiPreview = document.getElementById('aiImagePreview');
         const generateBtn = document.getElementById('generateAIBtn');
         
@@ -564,10 +623,12 @@
         aiInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if(file) {
+                aiFileName.innerText = file.name;
                 aiPreview.src = URL.createObjectURL(file);
                 aiPreview.style.display = 'block';
                 generateBtn.style.display = 'block';
             } else {
+                aiFileName.innerText = "";
                 aiPreview.style.display = 'none';
                 generateBtn.style.display = 'none';
             }
@@ -577,7 +638,8 @@
             const file = aiInput.files[0];
             if(!file) return;
 
-            aiInput.style.display = 'none';
+            // Hide the custom label wrappers during generation
+            document.getElementById('ai-upload-wrapper').style.display = 'none';
             generateBtn.style.display = 'none';
             aiProgressWrapper.style.display = 'block';
             
@@ -595,19 +657,17 @@
             }, 800);
 
             try {
-                // 1. Upload the image to Temp Storage
                 const tempImageRef = ref(storage, 'temp_images/' + currentUser.uid + '_' + Date.now() + '_' + file.name);
                 await uploadBytesResumable(tempImageRef, file);
                 const imageUrl = await getDownloadURL(tempImageRef);
 
-                // 2. Call the new Bulletproof Backend (Passing the user UID and EMAIL)
                 const response = await fetch("https://us-central1-dryclean-307e9.cloudfunctions.net/generate3DModel", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ 
                         imageUrl: imageUrl,
                         uid: currentUser.uid,
-                        userEmail: currentUser.email // ADDED FOR BILLING
+                        userEmail: currentUser.email 
                     })
                 });
 
@@ -619,14 +679,12 @@
                 const data = await response.json();
                 if (data.error) throw new Error(data.error);
 
-                // 3. The Backend gives us a perfect Firebase URL!
                 currentAiGeneratedUrl = data.glbUrl;
                 currentAiFileName = data.fileName;
 
                 clearInterval(progressInterval);
                 aiProgressWrapper.style.display = 'none';
 
-                // 4. Show the Preview! 
                 aiPreviewContainer.style.display = 'block';
                 aiLocalViewer.removeAttribute('crossorigin');
                 aiLocalViewer.setAttribute('src', currentAiGeneratedUrl); 
@@ -638,13 +696,12 @@
                 alert("AI Error: " + error.message);
                 
                 aiProgressWrapper.style.display = 'none';
-                aiInput.style.display = 'block';
+                document.getElementById('ai-upload-wrapper').style.display = 'block';
                 generateBtn.style.display = 'block';
                 aiProgressBar.style.width = '0%';
             }
         });
 
-        // Step 3: Confirm & Save to Gallery
         aiSaveBtn.addEventListener('click', async () => {
             if(!currentAiGeneratedUrl) return;
 
@@ -652,8 +709,6 @@
             aiSaveBtn.innerText = "Adding to Gallery... Please wait";
 
             try {
-                // Since the file is ALREADY secured in Firebase by the backend, 
-                // we just instantly link it to the user's gallery in the database!
                 await addDoc(collection(db, "clients"), {
                     uid: currentUser.uid,          
                     userEmail: currentUser.email,  
