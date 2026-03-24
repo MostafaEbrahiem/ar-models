@@ -1,5 +1,6 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
+const Replicate = require("replicate");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -28,16 +29,15 @@ exports.paypalWebhook = onRequest(async (req, res) => {
 });
 
 // ==========================================
-// 2. THE DUMMY SWITCH TEST (INSTANT & FREE)
+// 2. THE PRODUCTION AI GENERATOR
 // ==========================================
 exports.generate3DModel = onRequest(
     { 
-        timeoutSeconds: 540,  // BOOSTED TO 9 MINUTES to prevent future timeouts!
+        timeoutSeconds: 540,  // 9 minutes of patience!
         memory: "1GiB",       
         cors: true            
     }, 
     async (req, res) => {
-        // Bulletproof header injection just in case of future timeouts
         res.set('Access-Control-Allow-Origin', '*');
 
         try {
@@ -47,22 +47,60 @@ exports.generate3DModel = onRequest(
                 return res.status(400).send({ error: "Missing image or User ID." });
             }
 
-            console.log("TEST MODE: Bypassing Replicate to test Firebase Storage...");
+            console.log("Sending image to Tencent Hunyuan-3D-3.1...");
 
-            // 1. THE FREE DUMMY DUCK URL
-            // This skips the AI generation wait time so we can test the plumbing instantly.
-            const replicateUrl = "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb";
+            const replicate = new Replicate({
+                auth: process.env.REPLICATE_API_TOKEN, 
+            });
 
-            console.log("Downloading Dummy Duck...");
+            // 1. THE REAL AI
+            const output = await replicate.run(
+                "tencent/hunyuan-3d-3.1",
+                {
+                    input: { 
+                        image: imageUrl, 
+                        remove_background: true, 
+                        steps: 30 
+                    }
+                }
+            );
 
-            // 2. Server downloads the file
-            const fileResponse = await fetch(replicateUrl);
-            if (!fileResponse.ok) throw new Error("Failed to download dummy file.");
+            // ==========================================
+            // 2. THE GOLDEN FIX (From your documentation find!)
+            // ==========================================
+            let replicateUrl = "";
+            
+            if (output && typeof output.url === 'function') {
+                // The new SDK method you found!
+                replicateUrl = output.url(); 
+            } else if (typeof output === 'string') {
+                replicateUrl = output;
+            } else if (Array.isArray(output)) {
+                // Sometimes it returns an array of File Objects
+                const firstItem = output[0];
+                if (firstItem && typeof firstItem.url === 'function') replicateUrl = firstItem.url();
+                else if (typeof firstItem === 'string') replicateUrl = firstItem;
+            } else if (output && typeof output === 'object') {
+                replicateUrl = output.mesh || output.model || output.glb;
+            }
+
+            if (!replicateUrl || typeof replicateUrl !== 'string') {
+                throw new Error("Could not extract 3D file URL: " + JSON.stringify(output));
+            }
+
+            console.log("Found URL! Downloading from Replicate CDN...");
+
+            // 3. Server securely downloads the file
+            const fileResponse = await fetch(replicateUrl, {
+                headers: { "Authorization": `Bearer ${process.env.REPLICATE_API_TOKEN}` }
+            });
+
+            if (!fileResponse.ok) throw new Error("Failed to download file from Replicate.");
 
             const arrayBuffer = await fileResponse.arrayBuffer();
             const buffer = Buffer.from(arrayBuffer);
 
-            // 3. Server saves directly to your Firebase Storage as a pure GLB
+            // 4. Server saves directly to Firebase
             const bucket = admin.storage().bucket("3dmosta1001");
             const safeFileName = `${uid}_AI_Gen_${Date.now()}.glb`;
             const file = bucket.file(`models/${safeFileName}`);
@@ -71,7 +109,7 @@ exports.generate3DModel = onRequest(
                 metadata: { contentType: 'model/gltf-binary' }
             });
 
-            // 4. Send back the secure Firebase link
+            // 5. Send back the secure Firebase link
             const encodedPath = encodeURIComponent(`models/${safeFileName}`);
             const finalFirebaseUrl = `https://firebasestorage.googleapis.com/v0/b/3dmosta1001/o/${encodedPath}?alt=media`;
 
