@@ -50,21 +50,25 @@
         .btn-downgrade { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); width: 100%; margin-top: 10px; }
         .btn-downgrade:hover { background: #ef4444; color: #fff; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
 
+        .btn-save-limits { background: #10b981; color: white; width: 100%; margin-top: 10px; padding: 8px; font-size: 13px; }
+        .btn-save-limits:hover { background: #059669; }
+
         /* USER GRID */
         .users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 30px; }
         .user-card { padding: 25px; display: flex; flex-direction: column; }
         .user-card h3 { margin: 0 0 5px 0; font-size: 18px; color: white; word-break: break-all; }
         
         .stats-box { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin: 15px 0; }
-        .stat-line { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: var(--text-dim); }
+        .stat-line { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; color: var(--text-dim); }
         .stat-line strong { color: var(--text-main); }
+        
+        .admin-input { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 6px; border-radius: 6px; width: 60px; text-align: center; font-weight: bold;}
         
         .badge-pro { background: rgba(34, 197, 94, 0.2); color: #4ade80; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid rgba(34, 197, 94, 0.3); }
         .badge-free { background: rgba(255, 255, 255, 0.1); color: var(--text-dim); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid rgba(255, 255, 255, 0.2); }
 
         /* INDIVIDUAL MODELS LIST */
         .model-list { margin-top: 10px; max-height: 180px; overflow-y: auto; padding-right: 5px; }
-        /* Custom Scrollbar for model list */
         .model-list::-webkit-scrollbar { width: 6px; }
         .model-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 10px; }
         .model-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
@@ -111,7 +115,7 @@
         <div class="header-panel glass-panel">
             <div>
                 <h2>User Management</h2>
-                <p>Monitor users, view their models, and manage subscriptions.</p>
+                <p>Monitor users, update AI limits, and manage content.</p>
             </div>
             <button id="logoutBtn" class="btn-logout">Sign Out</button>
         </div>
@@ -123,8 +127,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFirestore, collection, query, getDocs, doc, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-        // Added Storage imports for deleting models
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getStorage, ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
         const firebaseConfig = {
@@ -141,6 +144,7 @@
         const db = getFirestore(app);
         const storage = getStorage(app);
 
+        // Make sure to replace this with your actual admin email!
         const ADMIN_EMAIL = "mostafaebrahiem1998@gmail.com";
 
         const loginSec = document.getElementById('login-section');
@@ -177,50 +181,65 @@
         async function loadAllUsers() {
             usersGrid.innerHTML = "<p style='grid-column: 1 / -1; text-align: center; color: var(--text-dim);'>Fetching database...</p>";
             
-            const q = query(collection(db, "clients"));
-            const snapshot = await getDocs(q);
+            const usersMap = {};
 
-            if (snapshot.empty) {
+            // 1. Fetch User Profiles (Billing & Limits)
+            const usersSnapshot = await getDocs(collection(db, "users"));
+            usersSnapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                usersMap[docSnap.id] = {
+                    email: data.userEmail || "Unknown",
+                    isPro: data.isPro || false,
+                    aiUsed: data.aiGenerationsUsed || 0,
+                    aiAllowed: data.aiGenerationsAllowed || 0,
+                    maxScans: data.maxScans || 3,
+                    models: []
+                };
+            });
+
+            // 2. Fetch Models and attach to Users
+            const modelsSnapshot = await getDocs(collection(db, "clients"));
+            modelsSnapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                const uid = data.uid;
+                
+                // If user uploaded a model but doesn't have a profile yet (legacy data)
+                if (!usersMap[uid]) {
+                    usersMap[uid] = { 
+                        email: data.userEmail || "Unknown", 
+                        isPro: data.maxScans > 3, 
+                        aiUsed: 0, 
+                        aiAllowed: data.maxScans > 3 ? 10 : 0, 
+                        maxScans: data.maxScans || 3,
+                        models: [] 
+                    };
+                }
+                usersMap[uid].models.push({ id: docSnap.id, ...data });
+            });
+
+            if (Object.keys(usersMap).length === 0) {
                 usersGrid.innerHTML = "<p style='grid-column: 1 / -1; text-align: center; color: var(--text-dim);'>No users found in database.</p>";
                 return;
             }
 
-            // Group models by User ID
-            const usersMap = {};
-            snapshot.forEach(docSnap => {
-                const data = docSnap.data();
-                const uid = data.uid;
-                
-                if (!usersMap[uid]) {
-                    usersMap[uid] = { email: data.userEmail, models: [], isPro: false };
-                }
-                usersMap[uid].models.push({ id: docSnap.id, ...data });
-                
-                if (data.maxScans > 3) usersMap[uid].isPro = true;
-            });
-
             usersGrid.innerHTML = ""; 
 
-            // Create a card for each user
+            // 3. Render User Cards
             Object.keys(usersMap).forEach(uid => {
                 const userData = usersMap[uid];
-                const statusBadge = userData.isPro 
-                    ? `<span class="badge-pro">PRO PLAN</span>` 
-                    : `<span class="badge-free">FREE TIER</span>`;
+                const statusBadge = userData.isPro ? `<span class="badge-pro">PRO PLAN</span>` : `<span class="badge-free">FREE TIER</span>`;
 
-                // Build the list of models for this user
                 let modelsHTML = '<div class="model-list">';
                 userData.models.forEach(model => {
                     const displayName = model.fileName ? model.fileName.replace('.glb', '') : 'Unnamed Model';
                     const scansUsed = model.scanCount || 0;
-                    const maxScans = model.maxScans || 3;
                     const encodedUrl = encodeURIComponent(model.modelUrl);
 
                     modelsHTML += `
                         <div class="model-item" id="model-item-${model.id}">
                             <div class="model-item-info">
                                 <span class="model-item-title" title="${displayName}">${displayName}</span>
-                                <span class="model-item-scans">Scans: ${scansUsed} / ${maxScans}</span>
+                                <span class="model-item-scans">Scans: ${scansUsed} / ${model.maxScans || 3}</span>
                             </div>
                             <div class="model-actions">
                                 <button class="btn-tiny btn-tiny-view" onclick="window.open('fallback.html?model=${encodedUrl}', '_blank')">View</button>
@@ -235,19 +254,31 @@
                 card.className = 'user-card glass-panel';
                 card.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <h3>${userData.email || 'Unknown Email'}</h3>
+                        <h3>${userData.email}</h3>
                     </div>
                     ${statusBadge}
                     
                     <div class="stats-box">
                         <div class="stat-line"><span>Uploaded Models:</span> <strong>${userData.models.length}</strong></div>
-                        <div class="stat-line"><span>User ID:</span> <strong style="font-size: 11px;">${uid.substring(0,8)}...</strong></div>
+                        <div class="stat-line"><span>AI Generations Used:</span> <strong>${userData.aiUsed}</strong></div>
+                        
+                        <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 10px 0;"></div>
+                        
+                        <div class="stat-line">
+                            <span>Max AI Models Allowed:</span> 
+                            <input type="number" id="ai-allow-${uid}" class="admin-input" value="${userData.aiAllowed}">
+                        </div>
+                        <div class="stat-line">
+                            <span>Max AR Scans (Per Code):</span> 
+                            <input type="number" id="scans-allow-${uid}" class="admin-input" value="${userData.maxScans}">
+                        </div>
+                        <button class="btn-save-limits" id="save-limits-${uid}">Save Limits & Sync Models</button>
                     </div>
                     
                     <strong style="font-size: 13px; color: var(--text-dim); margin-top: 5px;">User Files:</strong>
                     ${modelsHTML}
                     
-                    <div style="margin-top: 15px;">
+                    <div style="margin-top: 15px; display: flex; gap: 10px;">
                         <button id="upgrade-${uid}" class="btn-upgrade" ${userData.isPro ? 'style="display:none;"' : ''}>Grant Pro Access</button>
                         <button id="downgrade-${uid}" class="btn-downgrade" ${!userData.isPro ? 'style="display:none;"' : ''}>Revoke Pro Access</button>
                     </div>
@@ -256,33 +287,73 @@
 
                 // --- ATTACH EVENT LISTENERS ---
 
-                // Upgrade
+                // Save Limits & Sync
+                document.getElementById(`save-limits-${uid}`).addEventListener('click', async (e) => {
+                    e.target.innerText = "Saving...";
+                    e.target.disabled = true;
+                    
+                    const newAiLimit = parseInt(document.getElementById(`ai-allow-${uid}`).value);
+                    const newScanLimit = parseInt(document.getElementById(`scans-allow-${uid}`).value);
+
+                    try {
+                        // 1. Update User Profile
+                        await updateDoc(doc(db, "users", uid), {
+                            aiGenerationsAllowed: newAiLimit,
+                            maxScans: newScanLimit
+                        });
+
+                        // 2. Sync all their existing models to the new Scan Limit
+                        const batch = writeBatch(db);
+                        userData.models.forEach(model => {
+                            batch.update(doc(db, "clients", model.id), { maxScans: newScanLimit });
+                        });
+                        await batch.commit();
+
+                        e.target.innerText = "Saved!";
+                        setTimeout(() => e.target.innerText = "Save Limits & Sync Models", 2000);
+                        e.target.disabled = false;
+                    } catch (error) {
+                        alert("Error saving limits: " + error.message);
+                        e.target.innerText = "Save Limits & Sync Models";
+                        e.target.disabled = false;
+                    }
+                });
+
+                // Upgrade to Pro
                 if(!userData.isPro) {
                     document.getElementById(`upgrade-${uid}`).addEventListener('click', async (e) => {
-                        if(confirm(`Are you sure you want to upgrade ${userData.email} to PRO?`)) {
+                        if(confirm(`Upgrade ${userData.email} to PRO?`)) {
                             e.target.innerText = "Upgrading...";
                             e.target.disabled = true;
+                            
+                            // Update Profile
+                            await updateDoc(doc(db, "users", uid), { isPro: true, maxScans: 1000, aiGenerationsAllowed: 10 });
+
+                            // Update Models
                             const batch = writeBatch(db);
-                            userData.models.forEach(model => {
-                                batch.update(doc(db, "clients", model.id), { maxScans: 1000 });
-                            });
+                            userData.models.forEach(model => { batch.update(doc(db, "clients", model.id), { maxScans: 1000 }); });
                             await batch.commit();
+                            
                             location.reload();
                         }
                     });
                 }
 
-                // Downgrade
+                // Downgrade to Free
                 if(userData.isPro) {
                     document.getElementById(`downgrade-${uid}`).addEventListener('click', async (e) => {
-                        if(confirm(`Downgrade ${userData.email} back to the FREE tier?`)) {
+                        if(confirm(`Downgrade ${userData.email} to FREE?`)) {
                             e.target.innerText = "Downgrading...";
                             e.target.disabled = true;
+                            
+                            // Update Profile
+                            await updateDoc(doc(db, "users", uid), { isPro: false, maxScans: 3, aiGenerationsAllowed: 0 });
+
+                            // Update Models
                             const batch = writeBatch(db);
-                            userData.models.forEach(model => {
-                                batch.update(doc(db, "clients", model.id), { maxScans: 3 });
-                            });
+                            userData.models.forEach(model => { batch.update(doc(db, "clients", model.id), { maxScans: 3 }); });
                             await batch.commit();
+                            
                             location.reload();
                         }
                     });
@@ -297,24 +368,18 @@
                     const fileName = e.target.getAttribute('data-filename');
                     const modelName = e.target.getAttribute('data-name');
                     
-                    if(confirm(`ADMIN WARNING: Are you sure you want to permanently delete "${modelName}"? This cannot be undone.`)) {
+                    if(confirm(`ADMIN WARNING: Delete "${modelName}"?`)) {
                         e.target.innerText = "...";
                         e.target.disabled = true;
-                        
                         try {
-                            // 1. Delete from Storage
                             if (fileName) {
                                 const fileRef = ref(storage, `models/${fileUid}_${fileName}`);
-                                await deleteObject(fileRef).catch(err => console.warn("File missing in storage", err));
+                                await deleteObject(fileRef).catch(err => console.warn("File missing in storage"));
                             }
-                            // 2. Delete from Database
                             await deleteDoc(doc(db, "clients", docId));
-                            
-                            // 3. Remove from UI instantly without reloading
                             document.getElementById(`model-item-${docId}`).remove();
                         } catch(error) {
-                            console.error("Delete failed", error);
-                            alert("Failed to delete model. Check console.");
+                            alert("Failed to delete model.");
                             e.target.innerText = "Delete";
                             e.target.disabled = false;
                         }

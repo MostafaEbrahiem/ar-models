@@ -168,8 +168,11 @@
                 <div id="ai-unlocked" style="display: none; width: 100%;">
                     <input type="file" id="aiImageInput" accept="image/png, image/jpeg, image/jpg">
                     <img id="aiImagePreview" style="display: none; width: 100%; height: 200px; object-fit: contain; background: rgba(0,0,0,0.5); border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1);">
+                    
                     <button id="generateAIBtn" class="btn-upload" style="background: linear-gradient(135deg, #a855f7, #ec4899); margin-top: 10px; width: 80%; display: none;">Generate 3D Model</button>
                     
+                    <p id="aiLimitStatus" style="font-size: 13px; font-weight: bold; color: #ec4899; margin-top: 10px;"></p>
+
                     <div class="progress-wrapper" id="ai-progress-wrapper" style="width: 100%;">
                         <div class="progress-bar-bg"><div class="progress-bar-fill" id="ai-progress-bar" style="background: linear-gradient(90deg, #a855f7, #ec4899); box-shadow: 0 0 10px #ec4899;"></div></div>
                         <p class="progress-text" id="ai-progress-text" style="color: #ec4899;">0% - Initializing AI...</p>
@@ -192,10 +195,11 @@
     </div>
 
     <script type="module">
+        // NEW: Imported setDoc and getDoc for User Limits
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDCAHxbic6CnLgieNd6vr0UKtByIX9XI-0",
@@ -255,12 +259,54 @@
             querySnapshot.forEach(docSnap => { 
                 if(docSnap.data().maxScans > 3) userIsPro = true; 
             });
+
+            // ==========================================
+            // NEW LIMIT CHECK LOGIC
+            // ==========================================
+            const userRef = doc(db, "users", uid);
+            let userSnap = await getDoc(userRef);
+
+            if (!userSnap.exists()) {
+                // First time setup for this user in the users table
+                await setDoc(userRef, {
+                    userEmail: currentUser.email,
+                    uid: currentUser.uid,
+                    isPro: userIsPro,
+                    aiGenerationsUsed: 0,
+                    aiGenerationsAllowed: 10,
+                    maxScans: userIsPro ? 1000 : 3
+                });
+                userSnap = await getDoc(userRef);
+            }
+
+            const aiUsed = userSnap.data().aiGenerationsUsed || 0;
+            const aiAllowed = userSnap.data().aiGenerationsAllowed || 10;
+            // ==========================================
             
             if(userIsPro) {
                 document.getElementById('ai-locked').style.display = 'none';
                 document.getElementById('ai-unlocked').style.display = 'flex';
                 document.getElementById('ai-unlocked').style.flexDirection = 'column';
                 document.getElementById('ai-unlocked').style.alignItems = 'center';
+
+                // UPDATE UI TEXT AND LOCK BUTTON IF NEEDED
+                const aiStatusTxt = document.getElementById('aiLimitStatus');
+                if (aiStatusTxt) {
+                    aiStatusTxt.innerText = `Generations Used: ${aiUsed} / ${aiAllowed}`;
+                    const genBtn = document.getElementById('generateAIBtn');
+                    
+                    if (aiUsed >= aiAllowed) {
+                        genBtn.disabled = true;
+                        genBtn.innerText = "Limit Reached";
+                        genBtn.style.opacity = "0.5";
+                        aiStatusTxt.innerText = "You have used all your AI generations.";
+                    } else {
+                        genBtn.disabled = false;
+                        genBtn.innerText = "Generate 3D Model";
+                        genBtn.style.opacity = "1";
+                    }
+                }
+
             } else {
                 document.getElementById('ai-locked').style.display = 'block';
                 document.getElementById('ai-unlocked').style.display = 'none';
@@ -272,7 +318,10 @@
                 document.getElementById('fileInput').style.display = 'none';
                 document.getElementById('upload-limit-msg').style.display = 'block';
                 if (userIsPro) {
-                    document.getElementById('ai-unlocked').innerHTML = '<p style="color:#ef4444; font-size:14px; font-weight:bold;">10 Model Limit Reached. Delete a model to generate more.</p>';
+                    const aiUnlocked = document.getElementById('ai-unlocked');
+                    if(aiUnlocked) {
+                        aiUnlocked.innerHTML = '<p style="color:#ef4444; font-size:14px; font-weight:bold;">10 Model Limit Reached. Delete a model to generate more.</p>';
+                    }
                 }
             } else {
                 document.getElementById('fileInput').style.display = 'block';
@@ -298,7 +347,7 @@
                 const scanTextClass = (scansUsed >= maxScans) ? "alert" : "";
                 const scanText = (scansUsed >= maxScans) ? "Limit Reached" : `${scansUsed} / ${maxScans} Scans`;
 
-                // Emergency Array Fix
+                // Array Fix
                 let rawUrl = data.modelUrl;
                 if (Array.isArray(rawUrl)) {
                     rawUrl = rawUrl[0];
@@ -551,13 +600,14 @@
                 await uploadBytesResumable(tempImageRef, file);
                 const imageUrl = await getDownloadURL(tempImageRef);
 
-                // 2. Call the new Bulletproof Backend (Passing the user UID)
+                // 2. Call the new Bulletproof Backend (Passing the user UID and EMAIL)
                 const response = await fetch("https://us-central1-dryclean-307e9.cloudfunctions.net/generate3DModel", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ 
                         imageUrl: imageUrl,
-                        uid: currentUser.uid 
+                        uid: currentUser.uid,
+                        userEmail: currentUser.email // ADDED FOR BILLING
                     })
                 });
 
