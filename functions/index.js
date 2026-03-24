@@ -33,7 +33,7 @@ exports.paypalWebhook = onRequest(async (req, res) => {
 // ==========================================
 exports.generate3DModel = onRequest(
     { 
-        timeoutSeconds: 540,  // 9 full minutes of patience
+        timeoutSeconds: 540,  
         memory: "1GiB",       
         cors: true            
     }, 
@@ -51,44 +51,41 @@ exports.generate3DModel = onRequest(
                 auth: process.env.REPLICATE_API_TOKEN, 
             });
 
-            // 1. THE REAL AI
-            // Cleaned up inputs for the 3.1 model specifically
+            // ==========================================
+            // OPTIMIZED FILE SIZE SETTINGS
+            // ==========================================
             const output = await replicate.run(
                 "tencent/hunyuan-3d-3.1",
                 {
                     input: { 
                         image: imageUrl, 
-                        enable_pbr: true, // Forces high-quality realistic textures
-                        face_count: 500000 
+                        enable_pbr: true, 
+                        // Drop polygons from 500,000 to 50,000 (Huge file size reduction)
+                        face_count: 50000, 
+                        // Force textures to 1024x1024 instead of 2048x2048 (Cuts image weight by 75%)
+                        texture_resolution: 1024 
                     }
                 }
             );
 
             // ==========================================
-            // 2. THE ULTIMATE "CATCH-ALL" DATA EXTRACTOR
+            // THE ULTIMATE "CATCH-ALL" DATA EXTRACTOR
             // ==========================================
             let buffer;
 
-            // Scenario A: Replicate returned the raw Blob/File directly (this caused the '{}' error!)
             if (output && typeof output.arrayBuffer === 'function') {
-                console.log("AI returned a file directly! Converting to buffer...");
                 const arrayBuffer = await output.arrayBuffer();
                 buffer = Buffer.from(arrayBuffer);
             }
-            // Scenario B: Replicate returned a Web Stream
             else if (output && typeof output.getReader === 'function') {
-                console.log("AI returned a stream! Reading stream...");
                 const response = new Response(output);
                 const arrayBuffer = await response.arrayBuffer();
                 buffer = Buffer.from(arrayBuffer);
             }
-            // Scenario C: Replicate returned an array with the raw file inside
             else if (Array.isArray(output) && output[0] && typeof output[0].arrayBuffer === 'function') {
-                console.log("AI returned an array with a file! Converting...");
                 const arrayBuffer = await output[0].arrayBuffer();
                 buffer = Buffer.from(arrayBuffer);
             }
-            // Scenario D: Replicate returned a URL (or an object containing the new .url() method)
             else {
                 let replicateUrl = "";
                 
@@ -108,7 +105,6 @@ exports.generate3DModel = onRequest(
                     throw new Error("Could not extract data. AI returned: " + JSON.stringify(output));
                 }
 
-                console.log("Found URL! Downloading from Replicate CDN...");
                 const fileResponse = await fetch(replicateUrl, {
                     headers: { "Authorization": `Bearer ${process.env.REPLICATE_API_TOKEN}` }
                 });
