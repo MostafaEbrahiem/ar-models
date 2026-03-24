@@ -298,6 +298,7 @@
                 const scanTextClass = (scansUsed >= maxScans) ? "alert" : "";
                 const scanText = (scansUsed >= maxScans) ? "Limit Reached" : `${scansUsed} / ${maxScans} Scans`;
 
+                // Emergency Array Fix
                 let rawUrl = data.modelUrl;
                 if (Array.isArray(rawUrl)) {
                     rawUrl = rawUrl[0];
@@ -440,6 +441,7 @@
                     return; 
                 }
                 
+                localViewer.removeAttribute('crossorigin');
                 localViewer.setAttribute('src', URL.createObjectURL(file));
                 previewContainer.style.display = 'block';
                 uploadBtn.style.display = 'inline-block';
@@ -507,11 +509,9 @@
         const aiLocalViewer = document.getElementById('ai-local-viewer');
         const aiSaveBtn = document.getElementById('aiSaveBtn');
 
-        // Global variables to hold data between steps
-        let currentAiGeneratedUrl = null;
+        let currentAiGeneratedBlob = null; 
         let originalImageName = "ai_model";
 
-        // Step 1: Show 2D Image Preview
         aiInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if(file) {
@@ -525,7 +525,6 @@
             }
         });
 
-        // Step 2: Generate the 3D Model and show it in the Preview Window
         generateBtn.addEventListener('click', async () => {
             const file = aiInput.files[0];
             if(!file) return;
@@ -538,14 +537,13 @@
             const progressInterval = setInterval(() => {
                 if (simProgress < 30) simProgress += 2;
                 else if (simProgress < 60) simProgress += 1;
-                else if (simProgress < 90) simProgress += 0.2;
+                else if (simProgress < 80) simProgress += 0.2;
 
                 aiProgressBar.style.width = simProgress + '%';
                 
                 if(simProgress < 20) aiProgressText.innerText = Math.round(simProgress) + "% - Uploading Image...";
                 else if(simProgress < 50) aiProgressText.innerText = Math.round(simProgress) + "% - AI Sculpting Mesh...";
-                else if(simProgress < 85) aiProgressText.innerText = Math.round(simProgress) + "% - AI Painting Textures...";
-                else aiProgressText.innerText = Math.round(simProgress) + "% - Finalizing Model (Almost done)...";
+                else if(simProgress < 80) aiProgressText.innerText = Math.round(simProgress) + "% - AI Painting Textures...";
             }, 800);
 
             try {
@@ -567,19 +565,24 @@
                 const data = await response.json();
                 if (data.error) throw new Error(data.error);
 
-                // Extract the exact Replicate URL
+                aiProgressText.innerText = "85% - Downloading model to browser...";
+
                 let replicateUrl = data.glbUrl;
                 if (Array.isArray(replicateUrl)) replicateUrl = replicateUrl[0];
                 else if (typeof replicateUrl === 'object') replicateUrl = replicateUrl.mesh || replicateUrl.glb || Object.values(replicateUrl)[0];
 
-                currentAiGeneratedUrl = replicateUrl;
+                const modelFetch = await fetch(replicateUrl);
+                const rawBlob = await modelFetch.blob();
+
+                currentAiGeneratedBlob = new Blob([rawBlob], { type: 'model/gltf-binary' });
+                const localBlobUrl = URL.createObjectURL(currentAiGeneratedBlob);
 
                 clearInterval(progressInterval);
                 aiProgressWrapper.style.display = 'none';
 
-                // Display the interactive 3D model BEFORE saving!
                 aiPreviewContainer.style.display = 'block';
-                aiLocalViewer.src = currentAiGeneratedUrl;
+                aiLocalViewer.removeAttribute('crossorigin'); 
+                aiLocalViewer.setAttribute('src', localBlobUrl);
                 aiSaveBtn.style.display = 'block';
 
             } catch (error) {
@@ -594,40 +597,26 @@
             }
         });
 
-        // Step 3: Explicitly Download as GLB and Save to Firebase
         aiSaveBtn.addEventListener('click', async () => {
-            if(!currentAiGeneratedUrl) return;
+            if(!currentAiGeneratedBlob) return;
 
             aiSaveBtn.disabled = true;
             aiSaveBtn.innerText = "Securing file... Please wait";
             
             aiProgressWrapper.style.display = 'block';
             aiProgressBar.style.width = '50%';
-            aiProgressText.innerText = "Downloading model from AI server...";
+            aiProgressText.innerText = "Uploading to your secure Storage...";
 
             try {
-                // Fetch the actual file from Replicate
-                const modelFetch = await fetch(currentAiGeneratedUrl);
-                const rawBlob = await modelFetch.blob();
-
-                // EMERGENCY FIX: We explicitly wrap the file in a STRICT 'model/gltf-binary' MIME type.
-                // Firebase is no longer allowed to guess that it is an HTML file.
-                const securedModelBlob = new Blob([rawBlob], { type: 'model/gltf-binary' });
-
-                aiProgressBar.style.width = '75%';
-                aiProgressText.innerText = "Uploading to your secure Storage...";
-
                 const safeFileName = "AI_Gen_" + Date.now() + "_" + originalImageName.split('.')[0] + ".glb";
                 const permanentStorageRef = ref(storage, 'models/' + currentUser.uid + '_' + safeFileName);
                 
-                // Upload to Firebase while explicitly telling it what the file type is
-                await uploadBytesResumable(permanentStorageRef, securedModelBlob, { contentType: 'model/gltf-binary' });
+                await uploadBytesResumable(permanentStorageRef, currentAiGeneratedBlob, { contentType: 'model/gltf-binary' });
                 const permanentDownloadUrl = await getDownloadURL(permanentStorageRef);
 
                 aiProgressBar.style.width = '100%';
                 aiProgressText.innerText = "Added to Gallery successfully!";
 
-                // Save to Firestore Database
                 await addDoc(collection(db, "clients"), {
                     uid: currentUser.uid,          
                     userEmail: currentUser.email,  
