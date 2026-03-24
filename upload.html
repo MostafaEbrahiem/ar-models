@@ -80,8 +80,9 @@
         .action-area h3 { color: white; margin-top: 0; font-size: 20px; }
         input[type="file"] { margin: 15px 0; color: var(--text-main); font-size: 14px;}
         
-        #preview-container { display: none; margin: 20px auto; max-width: 100%; border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
-        #preview-container model-viewer { width: 100%; height: 250px; background: transparent; }
+        /* RESTORED CSS FOR PREVIEW CONTAINER SO IT DOES NOT COLLAPSE */
+        #preview-container { display: none; margin: 20px auto; width: 100%; border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
+        #preview-container model-viewer { width: 100%; height: 300px; background: transparent; outline: none; }
         
         #upload-limit-msg { display: none; padding: 15px; background: rgba(234, 179, 8, 0.1); color: #facc15; border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(234, 179, 8, 0.3); font-size: 14px;}
 
@@ -151,7 +152,7 @@
                 <input type="file" id="fileInput" accept=".glb">
                 
                 <div id="preview-container">
-                    <model-viewer id="local-viewer" alt="A 3D model preview" auto-rotate camera-controls autoplay environment-image="neutral" shadow-intensity="1" camera-orbit="auto auto 500%" max-camera-orbit="auto auto 1000%"></model-viewer>
+                    <model-viewer id="local-viewer" crossorigin="anonymous" alt="A 3D model preview" auto-rotate camera-controls autoplay environment-image="neutral" shadow-intensity="1" camera-orbit="auto auto 500%" max-camera-orbit="auto auto 1000%"></model-viewer>
                 </div>
 
                 <button id="uploadBtn" class="btn-upload" style="display: none; margin: 15px auto 0; width: 80%;">Upload to Gallery</button>
@@ -260,7 +261,6 @@
                 if(docSnap.data().maxScans > 3) userIsPro = true; 
             });
             
-            // UI Toggle based on Pro status
             if(userIsPro) {
                 document.getElementById('ai-locked').style.display = 'none';
                 document.getElementById('ai-unlocked').style.display = 'block';
@@ -362,18 +362,14 @@
                                 for (let c = 0; c < cols; c++) {
                                     const x = padding + c * (qrSize + padding);
                                     const y = padding + r * (qrSize + padding);
-                                    
                                     ctx.drawImage(imgObj, x, y, qrSize, qrSize);
-                                    
                                     ctx.strokeStyle = '#cbd5e1';
                                     ctx.lineWidth = 1;
                                     ctx.setLineDash([5, 5]);
                                     ctx.strokeRect(x - padding/2, y - padding/2, qrSize + padding, qrSize + padding);
                                 }
                             }
-                            
                             const gridDataUrl = gridCanvas.toDataURL('image/png');
-                            
                             setTimeout(() => {
                                 const linkGrid = document.createElement('a');
                                 linkGrid.href = gridDataUrl;
@@ -389,7 +385,6 @@
                     if (confirm("Are you sure you want to permanently delete this model? This will break any printed QR codes.")) {
                         e.target.innerText = "Deleting...";
                         e.target.disabled = true;
-                        
                         try {
                             const fileRef = ref(storage, `models/${currentUser.uid}_${data.fileName}`);
                             await deleteObject(fileRef).catch(err => console.warn("File already gone from storage"));
@@ -434,22 +429,13 @@
                     return; 
                 }
                 
-                // PREVIEW FIX: Remove CORS block for local Blob files and force render
-                const objectUrl = URL.createObjectURL(file);
-                localViewer.removeAttribute('crossorigin'); 
-                localViewer.setAttribute('src', objectUrl);
-                
+                // RESTORED EXACT ORIGINAL JAVASCRIPT
+                localViewer.setAttribute('src', URL.createObjectURL(file));
                 previewContainer.style.display = 'block';
                 uploadBtn.style.display = 'inline-block';
             } else {
                 previewContainer.style.display = 'none';
                 uploadBtn.style.display = 'none';
-                
-                // Clean up memory if they cancel
-                if (localViewer.src) {
-                    URL.revokeObjectURL(localViewer.src);
-                    localViewer.removeAttribute('src');
-                }
             }
         });
 
@@ -478,7 +464,6 @@
                 }, 
                 () => {
                     statusText.innerText = "Processing & Securing Link...";
-                    
                     const startingScans = userIsPro ? 1000 : 3;
 
                     getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
@@ -515,14 +500,12 @@
             btn.disabled = true;
 
             try {
-                // Step 1: Upload the 2D image temporarily to your Firebase Storage
                 const tempImageRef = ref(storage, 'temp_images/' + currentUser.uid + '_' + Date.now() + '_' + file.name);
                 await uploadBytesResumable(tempImageRef, file);
                 const imageUrl = await getDownloadURL(tempImageRef);
 
                 btn.innerText = "2. AI Generating 3D Model (Takes ~5-10s)...";
 
-                // Step 2: Send the image URL to your Cloud Function
                 const response = await fetch("https://us-central1-dryclean-307e9.cloudfunctions.net/generate3DModel", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -540,7 +523,6 @@
 
                 btn.innerText = "3. Saving to Dashboard...";
 
-                // Step 3: Save the newly generated .glb file to their database!
                 await addDoc(collection(db, "clients"), {
                     uid: currentUser.uid,          
                     userEmail: currentUser.email,  
