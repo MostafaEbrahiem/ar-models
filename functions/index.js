@@ -29,7 +29,7 @@ exports.paypalWebhook = onRequest(async (req, res) => {
 });
 
 // ==========================================
-// 2. THE NEW AI 3D GENERATOR (CHEAP POTATO MODE)
+// 2. THE NEW AI 3D GENERATOR (CHEAP POTATO v2)
 // ==========================================
 exports.generate3DModel = onRequest(
     { 
@@ -49,53 +49,52 @@ exports.generate3DModel = onRequest(
                 auth: process.env.REPLICATE_API_TOKEN, 
             });
 
-            console.log("Sending image to the Cheap Potato (Shap-E)...");
+            console.log("Sending image to New Cheap Potato (Shap-E)...");
 
-            // --- CHEAP POTATO SWAP ---
-            // We use Shap-E. It costs ~$0.002 instead of $0.16. 
-            // The result will be low-res, but it perfectly tests the plumbing!
+            // --- THE UPDATED MODEL YOU FOUND ---
             const output = await replicate.run(
-                "cjwbw/shap-e:5957069d5c509126a73c7cb68abcddbb985aeefa4d318e7c646af1cb3c4c8c50",
+                "guillaumemartinfesta/shap-e:60c562478d89bfa5309a1096263e2492bc504939c042292930243107cda02a63",
                 {
                     input: { 
                         image: imageUrl, 
-                        save_mesh: true // Forces it to output a .glb file
                     }
                 }
             );
 
-            // 1. Safely extract the exact URL from Replicate
+            // 1. Safely extract the GLB URL
+            // Shap-E often returns a single string URL for the .glb file
             let replicateUrl = "";
-            if (typeof output === 'string') replicateUrl = output;
-            else if (Array.isArray(output)) replicateUrl = output.find(u => typeof u === 'string' && u.endsWith('.glb')) || output[0];
-            else if (typeof output === 'object') replicateUrl = output.model || output.mesh || output.glb || Object.values(output).find(v => typeof v === 'string' && v.startsWith('http'));
+            if (typeof output === 'string') {
+                replicateUrl = output;
+            } else if (Array.isArray(output)) {
+                replicateUrl = output.find(u => typeof u === 'string' && u.endsWith('.glb')) || output[0];
+            } else if (output && typeof output === 'object') {
+                replicateUrl = output.mesh || output.model || Object.values(output).find(v => typeof v === 'string' && v.startsWith('http'));
+            }
 
             if (!replicateUrl || typeof replicateUrl !== 'string') {
-                throw new Error("Could not extract URL from Replicate: " + JSON.stringify(output));
+                throw new Error("Could not extract 3D file from AI output: " + JSON.stringify(output));
             }
 
             console.log("Downloading from Replicate CDN...");
 
-            // 2. The Server downloads the file using the Replicate API Token
-            const fileResponse = await fetch(replicateUrl, {
-                headers: { "Authorization": `Bearer ${process.env.REPLICATE_API_TOKEN}` }
-            });
-
+            // 2. Server downloads the file
+            const fileResponse = await fetch(replicateUrl);
             if (!fileResponse.ok) throw new Error("Failed to download from Replicate.");
 
             const arrayBuffer = await fileResponse.arrayBuffer();
             const buffer = Buffer.from(arrayBuffer);
 
-            // 3. The Server directly saves it to Firebase as a pure GLB file
+            // 3. Server saves directly to your Firebase Storage
             const bucket = admin.storage().bucket("3dmosta1001");
             const safeFileName = `${uid}_AI_Gen_${Date.now()}.glb`;
             const file = bucket.file(`models/${safeFileName}`);
 
             await file.save(buffer, {
-                metadata: { contentType: 'model/gltf-binary' } // Forces strict 3D file format
+                metadata: { contentType: 'model/gltf-binary' }
             });
 
-            // 4. Send the secure Firebase URL back to the website
+            // 4. Send back the secure Firebase link
             const encodedPath = encodeURIComponent(`models/${safeFileName}`);
             const finalFirebaseUrl = `https://firebasestorage.googleapis.com/v0/b/3dmosta1001/o/${encodedPath}?alt=media`;
 
