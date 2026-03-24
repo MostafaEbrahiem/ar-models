@@ -29,7 +29,7 @@ exports.paypalWebhook = onRequest(async (req, res) => {
 });
 
 // ==========================================
-// 2. THE NEW AI 3D GENERATOR (BULLETPROOF)
+// 2. THE NEW AI 3D GENERATOR (CHEAP POTATO MODE)
 // ==========================================
 exports.generate3DModel = onRequest(
     { 
@@ -39,7 +39,6 @@ exports.generate3DModel = onRequest(
     }, 
     async (req, res) => {
         try {
-            // We now accept the user's UID from the frontend
             const { imageUrl, uid } = req.body;
             
             if (!imageUrl || !uid) {
@@ -50,12 +49,18 @@ exports.generate3DModel = onRequest(
                 auth: process.env.REPLICATE_API_TOKEN, 
             });
 
-            console.log("Sending image to Tencent Hunyuan-3D...");
+            console.log("Sending image to the Cheap Potato (Shap-E)...");
 
+            // --- CHEAP POTATO SWAP ---
+            // We use Shap-E. It costs ~$0.002 instead of $0.16. 
+            // The result will be low-res, but it perfectly tests the plumbing!
             const output = await replicate.run(
-                "tencent/hunyuan-3d-3.1",
+                "cjwbw/shap-e:5957069d5c509126a73c7cb68abcddbb985aeefa4d318e7c646af1cb3c4c8c50",
                 {
-                    input: { image: imageUrl, remove_background: true, steps: 30 }
+                    input: { 
+                        image: imageUrl, 
+                        save_mesh: true // Forces it to output a .glb file
+                    }
                 }
             );
 
