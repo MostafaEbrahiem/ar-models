@@ -71,18 +71,26 @@
         .btn-delete-model { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); width: 100%; margin-top: 10px; }
         .btn-delete-model:hover { background: #ef4444; color: #fff; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
 
-        /* UPLOAD AREA */
-        .upload-area { border: 2px dashed rgba(0, 210, 255, 0.3); padding: 40px 20px; text-align: center; margin-bottom: 40px; background: rgba(0,0,0,0.2); }
-        .upload-area h3 { color: white; margin-top: 0; font-size: 22px; }
-        input[type="file"] { margin: 15px 0; color: var(--text-main); }
-        
-        #preview-container { display: none; margin: 20px auto; max-width: 500px; border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
-        #preview-container model-viewer { width: 100%; height: 350px; background: transparent; }
-        
-        #upload-limit-msg { display: none; padding: 20px; background: rgba(234, 179, 8, 0.1); color: #facc15; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(234, 179, 8, 0.3); }
+        /* NEW TWO-COLUMN ACTION WRAPPER */
+        .action-cards-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
+        @media (max-width: 768px) { .action-cards-wrapper { grid-template-columns: 1fr; } }
 
-        .btn-upgrade-limit { display: inline-block; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold; margin-top: 15px; transition: transform 0.2s, box-shadow 0.2s; }
+        /* UPLOAD AREAS */
+        .action-area { border: 2px dashed rgba(255, 255, 255, 0.2); padding: 30px 20px; text-align: center; background: rgba(0,0,0,0.2); display: flex; flex-direction: column; justify-content: center;}
+        .action-area h3 { color: white; margin-top: 0; font-size: 20px; }
+        input[type="file"] { margin: 15px 0; color: var(--text-main); font-size: 14px;}
+        
+        #preview-container { display: none; margin: 20px auto; max-width: 100%; border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
+        #preview-container model-viewer { width: 100%; height: 250px; background: transparent; }
+        
+        #upload-limit-msg { display: none; padding: 15px; background: rgba(234, 179, 8, 0.1); color: #facc15; border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(234, 179, 8, 0.3); font-size: 14px;}
+
+        .btn-upgrade-limit { display: inline-block; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 10px 20px; border-radius: 10px; text-decoration: none; font-weight: bold; margin-top: 10px; transition: transform 0.2s, box-shadow 0.2s; font-size: 14px;}
         .btn-upgrade-limit:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(0, 210, 255, 0.4); }
+
+        /* AI LOCKED STATE */
+        .ai-badge { display: inline-block; background: linear-gradient(135deg, #a855f7, #ec4899); color: white; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; margin-bottom: 10px; letter-spacing: 1px;}
+        .locked-overlay { padding: 15px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
 
         /* GALLERY GRID */
         .models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; }
@@ -94,15 +102,12 @@
         .stats { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; font-size: 14px; font-weight: bold; margin-bottom: 20px; color: var(--text-dim); border: 1px solid rgba(255,255,255,0.05);}
         .alert { color: #ef4444; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
 
-        /* White wrapper to ensure QR code scans against dark background */
         .qr-wrapper { background: white; padding: 15px; border-radius: 12px; display: inline-block; margin: 0 auto 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
 
-        .progress-wrapper { display: none; margin-top: 20px; width: 100%; max-width: 400px; margin: 20px auto 0; }
-        .progress-bar-bg { background-color: rgba(255,255,255,0.1); border-radius: 99px; width: 100%; height: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+        .progress-wrapper { display: none; margin-top: 15px; width: 100%; max-width: 400px; margin: 15px auto 0; }
+        .progress-bar-bg { background-color: rgba(255,255,255,0.1); border-radius: 99px; width: 100%; height: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
         .progress-bar-fill { background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%; height: 100%; transition: width 0.2s ease; box-shadow: 0 0 10px var(--primary); }
-        .progress-text { margin-top: 10px; font-size: 13px; font-weight: bold; color: var(--text-main); }
-
-        @media (max-width: 600px) { .navbar { padding: 15px 20px; } .nav-links { gap: 15px; } .dashboard-container { padding: 0 15px; } }
+        .progress-text { margin-top: 8px; font-size: 12px; font-weight: bold; color: var(--text-main); }
     </style>
 </head>
 <body>
@@ -132,28 +137,49 @@
             <button id="logoutBtn" class="btn-logout">Sign Out</button>
         </div>
 
-        <div class="upload-area glass-panel">
-            <h3>Upload a New Model</h3>
-            <p style="font-size: 14px; margin-bottom: 15px;">Max file size: 50MB (.glb only)</p>
+        <div class="action-cards-wrapper">
             
-            <div id="upload-limit-msg">
-                <p style="margin: 0;"><strong>Limit Reached:</strong> You have used your available free model slot. Delete the model below to make room, or unlock up to 10 active models with Pro.</p>
-                <a href="index.html#pricing" class="btn-upgrade-limit">Upgrade to Pro ($15/mo)</a>
+            <div class="action-area glass-panel" style="border-color: rgba(0, 210, 255, 0.3);">
+                <h3>Manual Upload</h3>
+                <p style="font-size: 13px; margin-bottom: 10px; color: var(--text-dim);">Already have a model? (Max 50MB .glb)</p>
+                
+                <div id="upload-limit-msg">
+                    <p style="margin: 0;"><strong>Limit Reached:</strong> Delete a model or upgrade.</p>
+                    <a href="index.html#pricing" class="btn-upgrade-limit">Upgrade to Pro ($15/mo)</a>
+                </div>
+
+                <input type="file" id="fileInput" accept=".glb">
+                
+                <div id="preview-container">
+                    <model-viewer id="local-viewer" crossorigin="anonymous" alt="A 3D model preview" auto-rotate camera-controls autoplay environment-image="neutral" shadow-intensity="1" camera-orbit="auto auto 500%" max-camera-orbit="auto auto 1000%"></model-viewer>
+                </div>
+
+                <button id="uploadBtn" class="btn-upload" style="display: none; margin: 15px auto 0; width: 80%;">Upload to Gallery</button>
+                <p id="upload-status" style="margin-top:10px; font-weight: bold; font-size: 13px;"></p>
+                
+                <div class="progress-wrapper" id="progress-wrapper">
+                    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-bar"></div></div>
+                    <p class="progress-text" id="progress-text">0% Uploaded</p>
+                </div>
             </div>
 
-            <input type="file" id="fileInput" accept=".glb">
-            
-            <div id="preview-container">
-                <model-viewer id="local-viewer" crossorigin="anonymous" alt="A 3D model preview" auto-rotate camera-controls autoplay environment-image="neutral" shadow-intensity="1" camera-orbit="auto auto 500%" max-camera-orbit="auto auto 1000%"></model-viewer>
+            <div class="action-area glass-panel" style="border-color: rgba(236, 72, 153, 0.3);">
+                <span class="ai-badge">PRO FEATURE</span>
+                <h3>Image to 3D AI</h3>
+                <p style="font-size: 13px; margin-bottom: 15px; color: var(--text-dim);">Turn any flat image into a full 3D AR model instantly.</p>
+                
+                <div id="ai-locked" class="locked-overlay">
+                    <p style="font-size: 14px; margin: 0 0 10px 0;">Unlock the AI generator to create models without using Blender.</p>
+                    <a href="index.html#pricing" class="btn-upgrade-limit" style="background: linear-gradient(135deg, #a855f7, #ec4899); box-shadow: 0 10px 20px -5px rgba(236, 72, 153, 0.4);">Upgrade to Unlock</a>
+                </div>
+
+                <div id="ai-unlocked" style="display: none;">
+                    <input type="file" id="aiImageInput" accept="image/png, image/jpeg, image/jpg">
+                    <button id="generateAIBtn" class="btn-upload" style="background: linear-gradient(135deg, #a855f7, #ec4899); margin-top: 10px; width: 80%;">Generate 3D Model</button>
+                    <p style="font-size: 11px; color: var(--text-dim); margin-top: 10px;">Powered by Stable Fast 3D</p>
+                </div>
             </div>
 
-            <button id="uploadBtn" class="btn-upload" style="display: none; margin: 15px auto 0;">Upload to Gallery</button>
-            <p id="upload-status" style="margin-top:15px; font-weight: bold; font-size: 14px;"></p>
-            
-            <div class="progress-wrapper" id="progress-wrapper">
-                <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-bar"></div></div>
-                <p class="progress-text" id="progress-text">0% Uploaded</p>
-            </div>
         </div>
 
         <div class="models-grid" id="models-grid"></div>
@@ -186,7 +212,7 @@
         const modelsGrid = document.getElementById('models-grid');
         
         let currentUser = null;
-        let userIsPro = false; // NEW: Global memory variable to track Pro status
+        let userIsPro = false; 
 
         loginBtn.addEventListener('click', () => {
             loginBtn.disabled = true;
@@ -220,16 +246,29 @@
             const q = query(collection(db, "clients"), where("uid", "==", uid));
             const querySnapshot = await getDocs(q);
 
-            userIsPro = false; // Reset on load
+            userIsPro = false; 
             querySnapshot.forEach(docSnap => { 
                 if(docSnap.data().maxScans > 3) userIsPro = true; 
             });
             
+            // UI Toggle based on Pro status
+            if(userIsPro) {
+                document.getElementById('ai-locked').style.display = 'none';
+                document.getElementById('ai-unlocked').style.display = 'block';
+            } else {
+                document.getElementById('ai-locked').style.display = 'block';
+                document.getElementById('ai-unlocked').style.display = 'none';
+            }
+
             const maxModelsAllowed = userIsPro ? 10 : 1;
 
             if (querySnapshot.size >= maxModelsAllowed) {
                 document.getElementById('fileInput').style.display = 'none';
                 document.getElementById('upload-limit-msg').style.display = 'block';
+                // Lock AI generation too if they hit the 10 model limit
+                if (userIsPro) {
+                    document.getElementById('ai-unlocked').innerHTML = '<p style="color:#ef4444; font-size:14px; font-weight:bold;">10 Model Limit Reached. Delete a model to generate more.</p>';
+                }
             } else {
                 document.getElementById('fileInput').style.display = 'block';
                 document.getElementById('upload-limit-msg').style.display = 'none';
@@ -428,7 +467,6 @@
                 () => {
                     statusText.innerText = "Processing & Securing Link...";
                     
-                    // NEW: Dynamically assign the scan limit based on their Pro status
                     const startingScans = userIsPro ? 1000 : 3;
 
                     getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
@@ -445,6 +483,16 @@
                     });
                 }
             );
+        });
+
+        // AI Placeholder Action
+        document.getElementById('generateAIBtn').addEventListener('click', () => {
+            const aiInput = document.getElementById('aiImageInput');
+            if(!aiInput.files[0]) {
+                alert("Please select an image first.");
+                return;
+            }
+            alert("This will connect to the Replicate API to generate the 3D model! (Backend hookup required).");
         });
     </script>
 </body>
