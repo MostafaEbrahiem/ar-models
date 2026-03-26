@@ -253,8 +253,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        // UPDATED IMPORTS FOR REDIRECT
-        import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
         import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
@@ -280,27 +279,15 @@
         let currentUser = null;
         let userIsPro = false; 
 
-        // ==========================================
-        // NEW REDIRECT LOGIN LOGIC
-        // ==========================================
         loginBtn.addEventListener('click', () => {
             loginBtn.disabled = true;
-            loginBtn.innerText = "Redirecting to Google...";
-            const provider = new GoogleAuthProvider();
-            signInWithRedirect(auth, provider);
+            loginBtn.innerText = "Opening Google...";
+            signInWithPopup(auth, new GoogleAuthProvider()).catch(err => {
+                alert("Login Failed: " + err.message);
+                loginBtn.disabled = false;
+                loginBtn.innerText = "Sign in with Google";
+            });
         });
-
-        // Catch any errors when returning from the Google redirect
-        getRedirectResult(auth).catch((error) => {
-            console.error("Login Error:", error);
-            // We ignore simple user cancellations, but alert real system errors
-            if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
-                alert("Login Failed: " + error.message);
-            }
-            loginBtn.disabled = false;
-            loginBtn.innerText = "Sign in with Google";
-        });
-        // ==========================================
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
             signOut(auth).then(() => location.reload());
@@ -345,7 +332,7 @@
             }
 
             const aiUsed = userSnap.data().aiGenerationsUsed || 0;
-            const aiAllowed = userSnap.data().aiGenerationsAllowed || 0; 
+            const aiAllowed = userSnap.data().aiGenerationsAllowed || 0; // Default to 0 unless pro
             
             if(userIsPro) {
                 document.getElementById('ai-locked').style.display = 'none';

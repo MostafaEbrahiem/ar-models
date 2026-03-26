@@ -126,8 +126,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        // 1. UPDATED IMPORT FOR REDIRECT
-        import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, collection, query, where, getDocs, doc, updateDoc, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getStorage, ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
@@ -152,24 +151,9 @@
         const deniedSec = document.getElementById('denied-section');
         const dashboardUI = document.getElementById('dashboard-ui');
         const usersGrid = document.getElementById('users-grid');
-        const loginBtn = document.getElementById('loginBtn');
         
-        // 2. NEW REDIRECT LOGIN LOGIC
-        loginBtn.addEventListener('click', () => {
-            loginBtn.disabled = true;
-            loginBtn.innerText = "Redirecting to Google...";
-            const provider = new GoogleAuthProvider();
-            signInWithRedirect(auth, provider);
-        });
-
-        // 3. CATCH REDIRECT ERRORS
-        getRedirectResult(auth).catch((error) => {
-            console.error("Login Error:", error);
-            if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
-                alert("Login Failed: " + error.message);
-            }
-            loginBtn.disabled = false;
-            loginBtn.innerText = "Sign in with Google";
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            signInWithPopup(auth, new GoogleAuthProvider()).catch(err => alert(err.message));
         });
 
         document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth).then(() => location.reload()));
@@ -199,6 +183,7 @@
             
             const usersMap = {};
 
+            // 1. Fetch User Profiles (Billing & Limits)
             const usersSnapshot = await getDocs(collection(db, "users"));
             usersSnapshot.forEach(docSnap => {
                 const data = docSnap.data();
@@ -207,23 +192,25 @@
                     isPro: data.isPro || false,
                     aiUsed: data.aiGenerationsUsed || 0,
                     aiAllowed: data.aiGenerationsAllowed || 0,
-                    maxScans: data.maxScans || 100, // Default to 100
+                    maxScans: data.maxScans || 3,
                     models: []
                 };
             });
 
+            // 2. Fetch Models and attach to Users
             const modelsSnapshot = await getDocs(collection(db, "clients"));
             modelsSnapshot.forEach(docSnap => {
                 const data = docSnap.data();
                 const uid = data.uid;
                 
+                // If user uploaded a model but doesn't have a profile yet (legacy data)
                 if (!usersMap[uid]) {
                     usersMap[uid] = { 
                         email: data.userEmail || "Unknown", 
-                        isPro: data.maxScans > 100, 
+                        isPro: data.maxScans > 3, 
                         aiUsed: 0, 
-                        aiAllowed: data.maxScans > 100 ? 10 : 0, 
-                        maxScans: data.maxScans || 100,
+                        aiAllowed: data.maxScans > 3 ? 10 : 0, 
+                        maxScans: data.maxScans || 3,
                         models: [] 
                     };
                 }
@@ -237,6 +224,7 @@
 
             usersGrid.innerHTML = ""; 
 
+            // 3. Render User Cards
             Object.keys(usersMap).forEach(uid => {
                 const userData = usersMap[uid];
                 const statusBadge = userData.isPro ? `<span class="badge-pro">PRO PLAN</span>` : `<span class="badge-free">FREE TIER</span>`;
@@ -251,7 +239,7 @@
                         <div class="model-item" id="model-item-${model.id}">
                             <div class="model-item-info">
                                 <span class="model-item-title" title="${displayName}">${displayName}</span>
-                                <span class="model-item-scans">Scans: ${scansUsed} / ${model.maxScans || 100}</span>
+                                <span class="model-item-scans">Scans: ${scansUsed} / ${model.maxScans || 3}</span>
                             </div>
                             <div class="model-actions">
                                 <button class="btn-tiny btn-tiny-view" onclick="window.open('fallback.html?model=${encodedUrl}', '_blank')">View</button>
@@ -297,6 +285,9 @@
                 `;
                 usersGrid.appendChild(card);
 
+                // --- ATTACH EVENT LISTENERS ---
+
+                // Save Limits & Sync
                 document.getElementById(`save-limits-${uid}`).addEventListener('click', async (e) => {
                     e.target.innerText = "Saving...";
                     e.target.disabled = true;
@@ -305,11 +296,13 @@
                     const newScanLimit = parseInt(document.getElementById(`scans-allow-${uid}`).value);
 
                     try {
+                        // 1. Update User Profile
                         await updateDoc(doc(db, "users", uid), {
                             aiGenerationsAllowed: newAiLimit,
                             maxScans: newScanLimit
                         });
 
+                        // 2. Sync all their existing models to the new Scan Limit
                         const batch = writeBatch(db);
                         userData.models.forEach(model => {
                             batch.update(doc(db, "clients", model.id), { maxScans: newScanLimit });
@@ -326,14 +319,17 @@
                     }
                 });
 
+                // Upgrade to Pro
                 if(!userData.isPro) {
                     document.getElementById(`upgrade-${uid}`).addEventListener('click', async (e) => {
                         if(confirm(`Upgrade ${userData.email} to PRO?`)) {
                             e.target.innerText = "Upgrading...";
                             e.target.disabled = true;
                             
+                            // Update Profile
                             await updateDoc(doc(db, "users", uid), { isPro: true, maxScans: 1000, aiGenerationsAllowed: 10 });
 
+                            // Update Models
                             const batch = writeBatch(db);
                             userData.models.forEach(model => { batch.update(doc(db, "clients", model.id), { maxScans: 1000 }); });
                             await batch.commit();
@@ -343,17 +339,19 @@
                     });
                 }
 
+                // Downgrade to Free
                 if(userData.isPro) {
                     document.getElementById(`downgrade-${uid}`).addEventListener('click', async (e) => {
                         if(confirm(`Downgrade ${userData.email} to FREE?`)) {
                             e.target.innerText = "Downgrading...";
                             e.target.disabled = true;
                             
-                            // UPDATED DOWNGRADE LOGIC (100 Scans)
-                            await updateDoc(doc(db, "users", uid), { isPro: false, maxScans: 100, aiGenerationsAllowed: 0 });
+                            // Update Profile
+                            await updateDoc(doc(db, "users", uid), { isPro: false, maxScans: 3, aiGenerationsAllowed: 0 });
 
+                            // Update Models
                             const batch = writeBatch(db);
-                            userData.models.forEach(model => { batch.update(doc(db, "clients", model.id), { maxScans: 100 }); });
+                            userData.models.forEach(model => { batch.update(doc(db, "clients", model.id), { maxScans: 3 }); });
                             await batch.commit();
                             
                             location.reload();
@@ -362,6 +360,7 @@
                 }
             });
 
+            // Delete Model Listener
             document.querySelectorAll('.delete-model-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const docId = e.target.getAttribute('data-id');
