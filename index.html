@@ -146,7 +146,7 @@
                     <div class="tier-name">Starter</div>
                     <div class="tier-price">$0<span>/mo</span></div>
                     <ul class="tier-features">
-                        <li>1 Active 3D Model</li><li>3 Free Scans</li><li>Standard AR Viewer</li><li>50MB File Limit</li>
+                        <li>1 Active 3D Model</li><li>100 Free Scans</li><li>Standard AR Viewer</li><li>50MB File Limit</li>
                     </ul>
                     <a href="upload.html" class="btn-pricing">Start for Free</a>
                 </div>
@@ -243,7 +243,8 @@
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     const scans = data.scanCount || 0;
-                    const maxScans = data.maxScans || 3; 
+                    // UPDATED: Default to 100 max scans to match new platform logic
+                    const maxScans = data.maxScans || 100; 
 
                     if (scans >= maxScans) {
                         loadingText.innerText = "Access Limited";
