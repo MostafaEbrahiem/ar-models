@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
+<html lang="en">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>3Dmosta | 3D Visualization Without Boundaries</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>3Dmosta | Enterprise-Grade 3D to Web AR Hosting</title>
     <meta name="description" content="The fastest way to host .glb models and generate trackable AR QR codes. No apps, no friction, just pure Web AR.">
 
     <link rel="icon" type="image/x-icon" href="favicon.ico?v=2">
@@ -17,314 +18,198 @@
       gtag('js', new Date());
       gtag('config', 'G-B80PCPRNQ9');
     </script>
+
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
     <script src="https://www.paypal.com/sdk/js?client-id=AZvDV_BZIjj_i7RcZhId6vapsGPsQdOw9mbX3PXHtiemW98_vdVYrD2vLC3GRE6lp0-UAX8ChU7XtK1u&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
 
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "secondary-dim": "#629efb",
-                        "surface-tint": "#72dcff",
-                        "on-secondary-container": "#f7f7ff",
-                        "secondary-fixed-dim": "#a5c5ff",
-                        "primary": "#72dcff",
-                        "background": "#060e20",
-                        "on-secondary-fixed-variant": "#004f9e",
-                        "error-dim": "#d7383b",
-                        "on-primary-fixed": "#002c38",
-                        "tertiary-fixed": "#94aeff",
-                        "surface-variant": "#192540",
-                        "primary-fixed-dim": "#00c3ed",
-                        "on-secondary-fixed": "#00336a",
-                        "surface-container-low": "#091328",
-                        "secondary-container": "#055db6",
-                        "on-background": "#dee5ff",
-                        "on-error": "#490006",
-                        "secondary": "#65a1fe",
-                        "on-tertiary": "#002266",
-                        "on-secondary": "#00224a",
-                        "surface-container-high": "#141f38",
-                        "on-primary": "#004c5e",
-                        "inverse-on-surface": "#4d556b",
-                        "outline": "#6d758c",
-                        "inverse-surface": "#faf8ff",
-                        "inverse-primary": "#00687f",
-                        "error": "#ff716c",
-                        "surface-container": "#0f1930",
-                        "surface-bright": "#1f2b49",
-                        "tertiary": "#84a2ff",
-                        "on-primary-fixed-variant": "#004c5e",
-                        "tertiary-fixed-dim": "#809fff",
-                        "on-tertiary-fixed": "#001444",
-                        "on-error-container": "#ffa8a3",
-                        "error-container": "#9f0519",
-                        "tertiary-dim": "#7899ff",
-                        "surface-dim": "#060e20",
-                        "surface": "#060e20",
-                        "primary-fixed": "#00d2ff",
-                        "primary-dim": "#00c3ed",
-                        "primary-container": "#00d2ff",
-                        "on-surface-variant": "#a3aac4",
-                        "on-tertiary-fixed-variant": "#00318c",
-                        "surface-container-lowest": "#000000",
-                        "tertiary-container": "#7294fa",
-                        "on-tertiary-container": "#001649",
-                        "on-surface": "#dee5ff",
-                        "secondary-fixed": "#bbd2ff",
-                        "outline-variant": "#40485d",
-                        "on-primary-container": "#004253",
-                        "surface-container-highest": "#192540"
-                    },
-                    fontFamily: {
-                        "headline": ["Space Grotesk"],
-                        "body": ["Inter"],
-                        "label": ["Inter"]
-                    },
-                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
-                },
-            },
-        }
-    </script>
     <style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        :root {
+            --primary: #00d2ff;
+            --secondary: #3a7bd5;
+            --dark-bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
         }
-        .glass-panel {
-            background: rgba(25, 37, 64, 0.4);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(64, 72, 93, 0.15);
-        }
-        .hero-glow {
-            box-shadow: 0 0 50px rgba(114, 220, 255, 0.15);
-        }
-        .ghost-border-bottom {
-            border-bottom: 1px solid rgba(64, 72, 93, 0.2);
-        }
-        .ghost-border-bottom:focus-within {
-            border-bottom: 1px solid #72dcff;
-        }
-        /* Ensures the 3D model fills the Tailwind containers */
-        model-viewer {
-            width: 100%;
-            height: 100%;
-            outline: none;
-            background-color: transparent;
+
+        body { font-family: 'Inter', -apple-system, sans-serif; margin: 0; padding: 0; background-color: var(--dark-bg); color: var(--text-main); line-height: 1.6; scroll-behavior: smooth; }
+        .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% -20%, #1e293b, #0f172a); z-index: -1; }
+
+        /* THE NAVIGATION BAR */
+        .navbar { position: fixed; top: 0; left: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; box-sizing: border-box; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); z-index: 100; }
+        .nav-logo { font-size: 24px; font-weight: 800; color: white; text-decoration: none; letter-spacing: -1px; }
+        .nav-links { display: flex; gap: 25px; align-items: center; }
+        .nav-item { color: var(--text-dim); text-decoration: none; font-weight: 600; font-size: 15px; transition: color 0.2s; }
+        .nav-item:hover { color: white; }
+        .nav-btn-primary { background: rgba(0, 210, 255, 0.1); color: var(--primary); border: 1px solid rgba(0, 210, 255, 0.3); padding: 8px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px; transition: all 0.2s; }
+        .nav-btn-primary:hover { background: var(--primary); color: #000; box-shadow: 0 0 15px rgba(0, 210, 255, 0.4); }
+
+        #landing-page { display: flex; flex-direction: column; align-items: center; padding: 120px 20px 0px; text-align: center; min-height: 100vh; }
+
+        /* HERO SECTION */
+        .hero-box { background: var(--glass); backdrop-filter: blur(12px); padding: 60px 40px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1); max-width: 850px; width: 100%; margin-bottom: 60px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+        .logo-gradient { font-size: 32px; font-weight: 800; background: linear-gradient(to right, var(--primary), var(--secondary)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; margin-bottom: 24px; display: inline-block; letter-spacing: -1px; }
+        h1 { font-size: clamp(32px, 5vw, 56px); margin-bottom: 20px; line-height: 1.1; font-weight: 800; letter-spacing: -0.02em; }
+        .hero-box p { font-size: 20px; color: var(--text-dim); max-width: 600px; margin: 0 auto 40px; }
+        .cta-btn { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; text-decoration: none; padding: 18px 36px; border-radius: 12px; font-size: 18px; font-weight: 700; transition: transform 0.2s, box-shadow 0.2s; display: inline-block; box-shadow: 0 10px 20px -5px rgba(0, 210, 255, 0.4); }
+        .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 15px 30px -5px rgba(0, 210, 255, 0.6); }
+
+        .status-pill { display: inline-flex; align-items: center; background: rgba(34, 197, 94, 0.1); color: #4ade80; padding: 6px 16px; border-radius: 99px; font-size: 13px; font-weight: 600; margin-bottom: 20px; border: 1px solid rgba(34, 197, 94, 0.2); }
+        .dot { height: 8px; width: 8px; background: #22c55e; border-radius: 50%; margin-right: 8px; animation: pulse 2s infinite; }
+
+        /* FEATURES SECTION */
+        .section-title { font-size: 36px; margin-bottom: 20px; font-weight: 800; }
+        .section-subtitle { color: var(--text-dim); font-size: 18px; margin-bottom: 50px; max-width: 600px; }
+        
+        .steps-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 1100px; width: 100%; margin-bottom: 80px;}
+        .step-card { background: var(--glass); padding: 40px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.05); text-align: left; transition: 0.3s; }
+        .step-card:hover { border-color: var(--primary); background: rgba(255, 255, 255, 0.08); }
+        .step-number { color: var(--primary); font-size: 40px; font-weight: 800; margin-bottom: 20px; opacity: 0.5; }
+        .step-card h3 { margin-bottom: 12px; font-size: 22px; }
+        .step-card p { color: var(--text-dim); font-size: 16px; margin: 0; }
+
+        /* SHOWCASE SECTION STYLES */
+        #showcase { width: 100%; max-width: 1100px; margin-bottom: 80px; text-align: center; }
+        .models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; text-align: left; }
+        .model-card { padding: 25px; text-align: center; display: flex; flex-direction: column; background: var(--glass); border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
+        .model-card h3 { margin: 0 0 15px 0; font-size: 20px; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .model-card model-viewer { width: 100%; height: 250px; background-color: rgba(0,0,0,0.3); border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); }
+        .qr-wrapper { background: white; padding: 15px; border-radius: 12px; display: inline-block; margin: 0 auto 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        button { border: none; outline: none; }
+        .btn-view { background: rgba(0, 210, 255, 0.1); color: var(--primary); border: 1px solid rgba(0, 210, 255, 0.3); width: 100%; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-size: 15px; font-weight: bold; transition: all 0.2s; margin-bottom: 10px; }
+        .btn-view:hover { background: var(--primary); color: #000; box-shadow: 0 0 15px rgba(0, 210, 255, 0.4); }
+        .btn-download { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); width: 100%; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-size: 15px; font-weight: bold; transition: all 0.2s; }
+        .btn-download:hover { background: #22c55e; color: #000; box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); }
+
+        /* PRICING SECTION */
+        #pricing { padding: 40px 20px; text-align: center; width: 100%; max-width: 1100px; margin-bottom: 60px;}
+        .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 40px; }
+        .pricing-card { background: var(--glass); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 40px 30px; text-align: left; display: flex; flex-direction: column; transition: transform 0.3s ease; }
+        .pricing-card:hover { transform: translateY(-10px); }
+        
+        .pricing-card.featured { background: rgba(15, 23, 42, 0.6); border: 2px solid var(--primary); box-shadow: 0 0 30px rgba(0, 210, 255, 0.15); transform: scale(1.05); }
+        .pricing-card.featured:hover { transform: scale(1.05) translateY(-10px); }
+
+        .tier-name { font-size: 20px; font-weight: 700; color: var(--text-dim); margin-bottom: 15px; }
+        .featured .tier-name { color: var(--primary); }
+        .tier-price { font-size: 48px; font-weight: 800; margin-bottom: 20px; color: white; }
+        .tier-price span { font-size: 18px; color: var(--text-dim); font-weight: normal; }
+        .tier-features { list-style: none; padding: 0; margin: 0 0 40px 0; flex-grow: 1; }
+        .tier-features li { margin-bottom: 15px; font-size: 16px; color: #cbd5e1; display: flex; align-items: center; }
+        .tier-features li::before { content: "✓"; color: #22c55e; font-weight: bold; margin-right: 12px; font-size: 18px; }
+        
+        .btn-pricing { display: block; text-align: center; background: rgba(255, 255, 255, 0.1); color: white; padding: 15px; border-radius: 12px; text-decoration: none; font-weight: bold; transition: 0.2s; }
+        .btn-pricing:hover { background: rgba(255, 255, 255, 0.2); }
+
+        /* THE FOOTER */
+        .footer { width: 100%; max-width: 1100px; margin-top: auto; padding: 30px 20px; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; color: var(--text-dim); font-size: 14px; }
+        .footer-links { display: flex; gap: 20px; }
+        .footer-links a { color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+        .footer-links a:hover { color: white; }
+        
+        /* SCANNER UI */
+        #scanner-page { display: none; text-align: center; padding-top: 15vh; }
+        .loader { border: 4px solid var(--glass); border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 800px) { .pricing-card.featured { transform: scale(1); } .pricing-card.featured:hover { transform: translateY(-10px); } }
+        @media (max-width: 600px) { 
+            .navbar { padding: 15px 20px; } .nav-links { gap: 15px; } .hero-box { padding: 40px 20px; } h1 { font-size: 36px; } 
+            .footer { flex-direction: column; text-align: center; }
         }
     </style>
 </head>
-<body class="bg-background text-on-background font-body selection:bg-primary selection:text-on-primary">
-    
-    <nav class="bg-slate-900/40 backdrop-blur-3xl border-b border-white/10 docked full-width top-0 sticky z-50 shadow-[0_0_15px_rgba(0,210,255,0.1)]">
-        <div class="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
-            <div class="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent font-headline tracking-tight cursor-pointer" onclick="window.location.href='index.html'">
-                3Dmosta
-            </div>
-            <div class="hidden md:flex items-center space-gap-8 gap-8">
-                <a class="text-slate-300 hover:text-white transition-colors font-headline text-sm tracking-tight" href="#pricing">Pricing</a>
-                <a class="text-slate-300 hover:text-white transition-colors font-headline text-sm tracking-tight" href="upload.html">My Models</a>
-                <button onclick="window.location.href='upload.html'" class="bg-gradient-to-r from-primary to-secondary text-on-primary-container px-6 py-2 rounded font-bold shadow-[0_0_15px_rgba(0,210,255,0.4)] scale-95 active:scale-90 transition-all duration-300">
-                    Get Started
-                </button>
-            </div>
-            <button class="md:hidden text-primary">
-                <span class="material-symbols-outlined">menu</span>
-            </button>
+<body>
+
+    <div class="bg-glow"></div>
+
+    <nav class="navbar" id="main-nav">
+        <a href="index.html" class="nav-logo">3Dmosta</a>
+        <div class="nav-links">
+            <a href="#pricing" class="nav-item">Pricing</a>
+            <a href="upload.html" class="nav-btn-primary">My Models</a>
         </div>
     </nav>
 
     <div id="landing-page">
-        <section class="relative pt-32 pb-20 px-6 overflow-hidden">
-            <div class="max-w-7xl mx-auto flex flex-col items-center text-center relative z-10">
-                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-panel mb-8 border border-primary/20">
-                    <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                    <span class="text-xs font-bold tracking-widest uppercase text-primary font-headline">Systems Online</span>
+        <div class="hero-box">
+            <div class="status-pill"><span class="dot"></span> Systems Online: Web AR v2.4</div>
+            <span class="logo-gradient">3Dmosta</span>
+            <h1>3D Visualization <br>Without Boundaries.</h1>
+            <p>Deploy your .glb models to the physical world. Generate enterprise-ready QR codes for instant, app-free Augmented Reality experiences.</p>
+            <a href="upload.html" class="cta-btn">Start Creating Now</a>
+        </div>
+
+        <h2 class="section-title">The Workflow</h2>
+        <p class="section-subtitle">Three simple steps to bring your 3D assets into the real world.</p>
+        
+        <div class="steps-container">
+            <div class="step-card"><div class="step-number">01</div><h3>Secure Upload</h3><p>Upload production-ready .glb files up to 50MB. Integrated Google Auth keeps your assets private.</p></div>
+            <div class="step-card"><div class="step-number">02</div><h3>Instant QR</h3><p>Get a unique, high-resolution QR code instantly mapped to your 3D asset. Ready for print or digital.</p></div>
+            <div class="step-card"><div class="step-number">03</div><h3>Global Access</h3><p>Your clients scan and view. No apps to download, no friction to overcome. Works on iOS and Android.</p></div>
+        </div>
+
+        <div id="showcase">
+            <h2 class="section-title">See It In Action</h2>
+            <p class="section-subtitle" style="margin: 0 auto 50px;">Scan these live examples with your phone to instantly launch them in AR.</p>
+            
+            <div class="models-grid" id="showcase-grid">
+                <p style="grid-column: 1 / -1; color: var(--text-dim);">Loading showcase models...</p>
+            </div>
+        </div>
+        
+        <div id="pricing">
+            <h2 class="section-title">Simple, Transparent Pricing</h2>
+            <p class="section-subtitle">Choose the plan that fits your 3D workflow. Upgrade anytime.</p>
+            
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <div class="tier-name">Starter</div>
+                    <div class="tier-price">$0<span>/mo</span></div>
+                    <ul class="tier-features">
+                        <li>1 Active 3D Model</li><li>100 Free Scans</li><li>Standard AR Viewer</li><li>50MB File Limit</li>
+                    </ul>
+                    <a href="upload.html" class="btn-pricing">Start for Free</a>
                 </div>
-                <h1 class="text-5xl md:text-7xl font-headline font-bold tracking-tight mb-6 max-w-4xl text-on-surface leading-tight">
-                    3D Visualization <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Without Boundaries</span>
-                </h1>
-                <p class="text-on-surface-variant text-lg md:text-xl max-w-2xl mb-12 font-light">
-                    The ultimate workspace for AR-ready assets. Upload, manage, and deploy stunning 3D experiences across any device with zero friction.
-                </p>
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <button onclick="window.location.href='upload.html'" class="bg-gradient-to-r from-primary to-secondary text-on-primary-container px-10 py-4 rounded font-bold shadow-[0_0_20px_rgba(0,210,255,0.3)] transition-all hover:scale-105 active:scale-95">
-                        Start Creating Now
-                    </button>
-                    <button onclick="document.getElementById('showcase').scrollIntoView()" class="glass-panel px-10 py-4 rounded font-medium text-on-surface hover:bg-white/5 transition-all">
-                        View Demo
-                    </button>
+
+                <div class="pricing-card featured">
+                    <div class="tier-name">Professional</div>
+                    <div class="tier-price">$15<span>/mo</span></div>
+                    <ul class="tier-features">
+                        <li>Up to 10 Active Models</li><li>1,000 Scans per Month</li><li>High-Priority Server Speed</li><li>Email Support</li>
+                    </ul>
+                    <div id="paypal-button-container-P-0P996054HY607042DNHAQBJI" style="margin-top: 15px; position: relative; z-index: 10;"></div>
+                </div>
+
+                <div class="pricing-card">
+                    <div class="tier-name">Business</div>
+                    <div class="tier-price">$49<span>/mo</span></div>
+                    <ul class="tier-features">
+                        <li>Unlimited 3D Models</li><li>Unlimited Scans</li><li>Dedicated Hosting Bucket</li><li>24/7 Priority Support</li>
+                    </ul>
+                    <a href="mailto:mostafaebrahiem1998@gmail.com?subject=Upgrade%20to%20Business%20Plan" class="btn-pricing">Contact Sales</a>
                 </div>
             </div>
-            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 blur-[120px] rounded-full pointer-events-none"></div>
-            <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/10 blur-[120px] rounded-full pointer-events-none"></div>
-        </section>
+        </div>
 
-        <section class="py-24 px-6 bg-surface-container-low">
-            <div class="max-w-7xl mx-auto">
-                <div class="mb-16">
-                    <h2 class="text-3xl font-headline font-bold text-on-surface mb-2">Technical Workflow</h2>
-                    <div class="w-12 h-1 bg-primary"></div>
-                </div>
-                <div class="grid md:grid-cols-3 gap-8">
-                    <div class="glass-panel p-8 group hover:border-primary/40 transition-all duration-500">
-                        <div class="mb-6 text-primary">
-                            <span class="material-symbols-outlined text-4xl" data-icon="cloud_upload">cloud_upload</span>
-                        </div>
-                        <h3 class="text-xl font-headline font-semibold mb-4 text-on-surface">Secure Upload</h3>
-                        <p class="text-on-surface-variant leading-relaxed">Enterprise-grade encryption for your proprietary CAD and 3D files. Seamless support for GLB, USDZ, and OBJ formats.</p>
-                    </div>
-                    <div class="glass-panel p-8 group hover:border-primary/40 transition-all duration-500">
-                        <div class="mb-6 text-primary">
-                            <span class="material-symbols-outlined text-4xl" data-icon="qr_code_2">qr_code_2</span>
-                        </div>
-                        <h3 class="text-xl font-headline font-semibold mb-4 text-on-surface">Instant QR</h3>
-                        <p class="text-on-surface-variant leading-relaxed">Automated conversion to AR-ready assets. Generate unique holographic entry points for your physical surroundings.</p>
-                    </div>
-                    <div class="glass-panel p-8 group hover:border-primary/40 transition-all duration-500">
-                        <div class="mb-6 text-primary">
-                            <span class="material-symbols-outlined text-4xl" data-icon="public">public</span>
-                        </div>
-                        <h3 class="text-xl font-headline font-semibold mb-4 text-on-surface">Global Access</h3>
-                        <p class="text-on-surface-variant leading-relaxed">Zero-latency delivery via our edge network. Preview models instantly in any browser or AR-capable headset.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="showcase" class="py-24 px-6 bg-surface">
-            <div class="max-w-7xl mx-auto">
-                <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-                    <div class="max-w-xl">
-                        <h2 class="text-4xl font-headline font-bold text-on-surface mb-4">See It In Action</h2>
-                        <p class="text-on-surface-variant">Explore how our community is leveraging the 3Dmosta engine to redefine spatial computing. Scan these with your phone!</p>
-                    </div>
-                    <button onclick="window.location.href='upload.html'" class="text-primary font-headline flex items-center gap-2 group">
-                        Explore Gallery <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
-                    </button>
-                </div>
-                
-                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8" id="showcase-grid">
-                    <p class="text-on-surface-variant col-span-full">Loading showcase models...</p>
-                </div>
-
-            </div>
-        </section>
-
-        <section class="py-24 px-6 bg-surface-container-low relative" id="pricing">
-            <div class="max-w-7xl mx-auto">
-                <div class="text-center mb-16">
-                    <h2 class="text-4xl font-headline font-bold text-on-surface mb-4">Flexible Infrastructure</h2>
-                    <p class="text-on-surface-variant max-w-xl mx-auto">Scale your 3D capabilities with plans designed for individuals and enterprise teams.</p>
-                </div>
-                <div class="grid md:grid-cols-3 gap-8 items-stretch">
-                    <div class="glass-panel p-10 flex flex-col">
-                        <h3 class="font-headline text-xl font-bold mb-2">Starter</h3>
-                        <div class="flex items-baseline gap-1 mb-6">
-                            <span class="text-3xl font-bold">$0</span>
-                            <span class="text-on-surface-variant text-sm">/month</span>
-                        </div>
-                        <ul class="space-y-4 mb-10 flex-grow">
-                            <li class="flex items-center gap-3 text-sm text-on-surface-variant">
-                                <span class="material-symbols-outlined text-primary text-lg" data-icon="check">check</span>
-                                1 Active 3D Model
-                            </li>
-                            <li class="flex items-center gap-3 text-sm text-on-surface-variant">
-                                <span class="material-symbols-outlined text-primary text-lg" data-icon="check">check</span>
-                                100 Free Scans
-                            </li>
-                            <li class="flex items-center gap-3 text-sm text-on-surface-variant">
-                                <span class="material-symbols-outlined text-primary text-lg" data-icon="check">check</span>
-                                Standard Viewport
-                            </li>
-                            <li class="flex items-center gap-3 text-sm text-on-surface-variant">
-                                <span class="material-symbols-outlined text-primary text-lg" data-icon="check">check</span>
-                                50MB File Limit
-                            </li>
-                        </ul>
-                        <button onclick="window.location.href='upload.html'" class="w-full py-3 glass-panel text-on-surface font-bold uppercase tracking-widest text-xs hover:bg-white/5 transition-all rounded">Start for Free</button>
-                    </div>
-                    <div class="glass-panel p-10 flex flex-col relative border-primary/50 bg-surface-container-high scale-105 z-20 shadow-[0_0_40px_rgba(114,220,255,0.1)] rounded-lg">
-                        <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-on-primary-fixed px-4 py-1 text-[10px] font-black tracking-widest uppercase rounded">Featured</div>
-                        <h3 class="font-headline text-xl font-bold mb-2 text-primary">Professional</h3>
-                        <div class="flex items-baseline gap-1 mb-6">
-                            <span class="text-4xl font-bold text-on-surface">$15</span>
-                            <span class="text-on-surface-variant text-sm">/month</span>
-                        </div>
-                        <ul class="space-y-4 mb-10 flex-grow">
-                            <li class="flex items-center gap-3 text-sm text-on-surface">
-                                <span class="material-symbols-outlined text-primary text-lg" data-icon="check">check</span>
-                                Up to 10 Active Models
-                            </li>
-                            <li class="flex items-center gap-3 text-sm text-on-surface">
-                                <span class="material-symbols-outlined text-primary text-lg" data-icon="check">check</span>
-                                1,000 Scans per Month
-                            </li>
-                            <li class="flex items-center gap-3 text-sm text-on-surface">
-                                <span class="material-symbols-outlined text-primary text-lg" data-icon="check">check</span>
-                                Image-to-3D AI Access
-                            </li>
-                            <li class="flex items-center gap-3 text-sm text-on-surface">
-                                <span class="material-symbols-outlined text-primary text-lg" data-icon="check">check</span>
-                                Priority Render Speed
-                            </li>
-                        </ul>
-                        <div id="paypal-button-container-P-0P996054HY607042DNHAQBJI" class="w-full z-10 relative"></div>
-                    </div>
-                    <div class="glass-panel p-10 flex flex-col">
-                        <h3 class="font-headline text-xl font-bold mb-2">Business</h3>
-                        <div class="flex items-baseline gap-1 mb-6">
-                            <span class="text-3xl font-bold">$49</span>
-                            <span class="text-on-surface-variant text-sm">/month</span>
-                        </div>
-                        <ul class="space-y-4 mb-10 flex-grow">
-                            <li class="flex items-center gap-3 text-sm text-on-surface-variant">
-                                <span class="material-symbols-outlined text-primary text-lg" data-icon="check">check</span>
-                                Unlimited 3D Models
-                            </li>
-                            <li class="flex items-center gap-3 text-sm text-on-surface-variant">
-                                <span class="material-symbols-outlined text-primary text-lg" data-icon="check">check</span>
-                                Unlimited Scans
-                            </li>
-                            <li class="flex items-center gap-3 text-sm text-on-surface-variant">
-                                <span class="material-symbols-outlined text-primary text-lg" data-icon="check">check</span>
-                                Dedicated Hosting Bucket
-                            </li>
-                        </ul>
-                        <button onclick="window.location.href='mailto:mostafaebrahiem1998@gmail.com?subject=Business Plan'" class="w-full py-3 glass-panel text-on-surface font-bold uppercase tracking-widest text-xs hover:bg-white/5 transition-all rounded">Contact Sales</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <footer class="bg-slate-950/60 backdrop-blur-2xl w-full border-t border-white/5 no shadows">
-            <div class="flex flex-col md:flex-row justify-between items-center py-12 px-8 max-w-7xl mx-auto space-y-4 md:space-y-0">
-                <div class="text-lg font-bold text-slate-100 font-headline">3Dmosta</div>
-                <div class="text-slate-400 font-['Inter'] text-sm tracking-wide">
-                    © 2026 3Dmosta. All rights reserved.
-                </div>
-                <div class="flex gap-6">
-                    <a class="text-slate-400 hover:text-cyan-300 transition-colors opacity-80 hover:opacity-100 text-sm" href="terms.html">Terms</a>
-                    <a class="text-slate-400 hover:text-cyan-300 transition-colors opacity-80 hover:opacity-100 text-sm" href="privacy.html">Privacy</a>
-                    <a class="text-slate-400 hover:text-cyan-300 transition-colors opacity-80 hover:opacity-100 text-sm" href="mailto:mostafaebrahiem1998@gmail.com">Contact</a>
-                </div>
+        <footer class="footer">
+            <div>&copy; 2026 3Dmosta. All rights reserved.</div>
+            <div class="footer-links">
+                <a href="terms.html">Terms of Service</a>
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="mailto:mostafaebrahiem1998@gmail.com">Contact Support</a>
             </div>
         </footer>
     </div>
 
-    <div class="hidden fixed inset-0 z-[100] bg-background flex-col items-center justify-center" id="ar-router-overlay">
-        <div class="relative w-24 h-24 mb-8">
-            <div class="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
-            <div class="absolute inset-0 border-4 border-t-primary rounded-full animate-spin"></div>
-        </div>
-        <h2 id="loading-text" class="font-headline text-2xl font-bold tracking-widest uppercase text-primary mb-2">Initializing AR Core...</h2>
-        <div id="scanner-content" class="text-on-surface-variant text-sm font-label uppercase tracking-widest">Establishing Spatial Anchors</div>
+    <div id="scanner-page">
+        <div class="loader"></div>
+        <h2 id="loading-text">Initializing AR Core...</h2>
+        <div id="scanner-content"></div>
     </div>
 
     <script type="module">
@@ -357,7 +242,7 @@
         }
 
         const landingPage = document.getElementById('landing-page');
-        const scannerPage = document.getElementById('ar-router-overlay');
+        const scannerPage = document.getElementById('scanner-page');
         const scannerContent = document.getElementById('scanner-content');
         const loadingText = document.getElementById('loading-text');
         const mainNav = document.getElementById('main-nav');
@@ -375,7 +260,7 @@
                 const querySnapshot = await getDocs(q);
 
                 if (querySnapshot.empty) {
-                    showcaseGrid.innerHTML = "<p class='text-on-surface-variant col-span-full'>Showcase models coming soon!</p>";
+                    showcaseGrid.innerHTML = "<p style='grid-column: 1 / -1; color: var(--text-dim);'>Showcase models coming soon!</p>";
                     return;
                 }
 
@@ -400,37 +285,23 @@
                         safeUrl = safeUrl.replace('/o/models/', '/o/models%2F');
                     }
 
-                    // Create the Tailwind stylized card
                     const card = document.createElement('div');
-                    card.className = 'flex flex-col';
+                    card.className = 'model-card';
                     card.innerHTML = `
-                        <div class="aspect-square bg-surface-container-lowest overflow-hidden mb-6 relative group rounded-xl">
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <model-viewer src="${safeUrl}" crossorigin="anonymous" alt="3D model preview" auto-rotate camera-controls autoplay environment-image="neutral" shadow-intensity="1" class="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700"></model-viewer>
-                                <div class="absolute inset-0 bg-gradient-to-t from-background to-transparent opacity-60 pointer-events-none"></div>
-                                <div class="absolute bottom-4 right-4 flex gap-2">
-                                    <span class="bg-surface-variant/80 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-primary border border-primary/20">AR READY</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <h4 class="font-headline font-bold text-lg text-on-surface">${displayName}</h4>
-                                <p class="text-on-surface-variant text-sm mb-4">Showcase Asset</p>
-                            </div>
-                            <div class="w-16 h-16 bg-white p-1 rounded-sm flex items-center justify-center" id="qr-showcase-${docId}"></div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3 mt-4">
-                            <button id="viewBtn-showcase-${docId}" class="glass-panel py-2 text-xs font-bold uppercase tracking-widest text-on-surface hover:bg-primary/10 transition-colors rounded-lg">View In Browser</button>
-                            <button id="downloadBtn-showcase-${docId}" class="glass-panel py-2 text-xs font-bold uppercase tracking-widest text-on-surface hover:bg-primary/10 transition-colors rounded-lg">Download QR</button>
-                        </div>
+                        <h3>${displayName}</h3>
+                        <model-viewer src="${safeUrl}" crossorigin="anonymous" alt="3D model preview" auto-rotate camera-controls autoplay environment-image="neutral" shadow-intensity="1" camera-orbit="auto auto 500%" max-camera-orbit="auto auto 1000%"></model-viewer>
+                        
+                        <div class="qr-wrapper" id="qr-showcase-${docId}"></div>
+                        
+                        <button id="viewBtn-showcase-${docId}" class="btn-view">View in Browser</button>
+                        <button id="downloadBtn-showcase-${docId}" class="btn-download">Download QR Code</button>
                     `;
 
                     showcaseGrid.appendChild(card);
 
-                    // Generate the QR code mapped to fit the Tailwind w-16 h-16
+                    // Generate the QR code for the showcase model
                     const qrContainer = document.getElementById(`qr-showcase-${docId}`);
-                    new QRCode(qrContainer, { text: clientLink, width: 56, height: 56, colorDark : "#000000", colorLight : "#ffffff" });
+                    new QRCode(qrContainer, { text: clientLink, width: 150, height: 150, colorDark : "#000000", colorLight : "#ffffff" });
 
                     // View Button
                     document.getElementById(`viewBtn-showcase-${docId}`).addEventListener('click', () => {
@@ -454,7 +325,7 @@
                 });
             } catch (error) {
                 console.error("Showcase Load Error:", error);
-                showcaseGrid.innerHTML = "<p class='text-error-dim col-span-full'>Unable to load showcase models at this time.</p>";
+                showcaseGrid.innerHTML = "<p style='grid-column: 1 / -1; color: #ef4444;'>Unable to load showcase models at this time.</p>";
             }
         }
         // =========================================
@@ -465,16 +336,14 @@
 
             if (!clientId) {
                 landingPage.style.display = 'flex';
-                scannerPage.classList.remove('flex');
-                scannerPage.classList.add('hidden');
+                scannerPage.style.display = 'none';
                 loadShowcaseModels(); // Trigger the showcase load ONLY if on landing page
                 return; 
             }
 
             landingPage.style.display = 'none';
             mainNav.style.display = 'none'; 
-            scannerPage.classList.remove('hidden');
-            scannerPage.classList.add('flex');
+            scannerPage.style.display = 'block';
 
             try {
                 const docRef = doc(db, "clients", clientId);
@@ -487,7 +356,7 @@
 
                     if (scans >= maxScans) {
                         loadingText.innerText = "Access Limited";
-                        scannerContent.innerHTML = `<p class='text-error-dim mt-4'>This experience has reached its scan limit.<br>Contact the owner to upgrade.</p>`;
+                        scannerContent.innerHTML = `<p style='color:#94a3b8; margin-top:20px;'>This experience has reached its scan limit.<br>Contact the owner to upgrade.</p>`;
                         return; 
                     }
 
@@ -497,12 +366,10 @@
 
                 } else {
                     loadingText.innerText = "Experience Not Found";
-                    scannerContent.innerText = "This AR link is invalid or has been deleted.";
                 }
             } catch (error) {
                 console.error(error);
                 loadingText.innerText = "Connection Error";
-                scannerContent.innerText = "Please check your internet connection.";
             }
         }
         checkRoute();
