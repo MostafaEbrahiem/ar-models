@@ -19,6 +19,9 @@
       gtag('config', 'G-B80PCPRNQ9');
     </script>
 
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
     <script src="https://www.paypal.com/sdk/js?client-id=AZvDV_BZIjj_i7RcZhId6vapsGPsQdOw9mbX3PXHtiemW98_vdVYrD2vLC3GRE6lp0-UAX8ChU7XtK1u&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
 
     <style>
@@ -67,9 +70,7 @@
         .step-card h3 { margin-bottom: 12px; font-size: 22px; }
         .step-card p { color: var(--text-dim); font-size: 16px; margin: 0; }
 
-        /* ========================================= */
         /* SHOWCASE SECTION STYLES */
-        /* ========================================= */
         #showcase { width: 100%; max-width: 1100px; margin-bottom: 80px; text-align: center; }
         .models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; text-align: left; }
         .model-card { padding: 25px; text-align: center; display: flex; flex-direction: column; background: var(--glass); border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
@@ -77,9 +78,9 @@
         .model-card model-viewer { width: 100%; height: 250px; background-color: rgba(0,0,0,0.3); border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); }
         .qr-wrapper { background: white; padding: 15px; border-radius: 12px; display: inline-block; margin: 0 auto 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         button { border: none; outline: none; }
-        .btn-view { background: rgba(0, 210, 255, 0.1); color: var(--primary); border: 1px solid rgba(0, 210, 255, 0.3); width: 100%; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-size: 15px; font-weight: bold; transition: all 0.2s; }
+        .btn-view { background: rgba(0, 210, 255, 0.1); color: var(--primary); border: 1px solid rgba(0, 210, 255, 0.3); width: 100%; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-size: 15px; font-weight: bold; transition: all 0.2s; margin-bottom: 10px; }
         .btn-view:hover { background: var(--primary); color: #000; box-shadow: 0 0 15px rgba(0, 210, 255, 0.4); }
-        .btn-download { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); width: 100%; margin-top: 10px; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-size: 15px; font-weight: bold; transition: all 0.2s; }
+        .btn-download { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); width: 100%; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-size: 15px; font-weight: bold; transition: all 0.2s; }
         .btn-download:hover { background: #22c55e; color: #000; box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); }
 
         /* PRICING SECTION */
@@ -160,6 +161,7 @@
                 <p style="grid-column: 1 / -1; color: var(--text-dim);">Loading showcase models...</p>
             </div>
         </div>
+        
         <div id="pricing">
             <h2 class="section-title">Simple, Transparent Pricing</h2>
             <p class="section-subtitle">Choose the plan that fits your 3D workflow. Upgrade anytime.</p>
@@ -212,7 +214,6 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        // UPDATED IMPORTS to include collection, query, where, getDocs
         import { getFirestore, doc, getDoc, updateDoc, increment, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
