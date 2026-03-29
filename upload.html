@@ -223,7 +223,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
         import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
@@ -250,17 +250,20 @@
         let userIsPro = false; 
 
         // AUTHENTICATION
-        loginBtn.addEventListener('click', () => {
-            loginBtn.disabled = true;
-            loginBtn.innerText = "Connecting to Google...";
-            signInWithRedirect(auth, new GoogleAuthProvider());
-        });
-
-        getRedirectResult(auth).catch(err => {
-            if(err.code !== 'auth/popup-closed-by-user') alert("Login Error: " + err.message);
-            loginBtn.disabled = false;
-            loginBtn.innerText = "Sign in with Google";
-        });
+loginBtn.addEventListener('click', () => {
+    loginBtn.disabled = true;
+    const originalText = loginBtn.innerText;
+    loginBtn.innerHTML = `<span class="material-symbols-outlined text-sm animate-spin inline-block align-middle mr-2">refresh</span> Connecting...`;
+    
+    signInWithPopup(auth, new GoogleAuthProvider()).catch(err => {
+        // If they just close the popup, don't show an ugly error, just reset the button
+        if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+            alert("Login Failed: " + err.message);
+        }
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = originalText;
+    });
+});
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {

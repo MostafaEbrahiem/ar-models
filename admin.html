@@ -124,7 +124,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, collection, query, where, getDocs, doc, updateDoc, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getStorage, ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
@@ -152,22 +152,20 @@
         const loginBtn = document.getElementById('loginBtn');
         
         // LOGIN ROUTING
-        loginBtn.addEventListener('click', () => {
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = `<span class="material-symbols-outlined text-black animate-spin">refresh</span> Connecting...`;
-            const provider = new GoogleAuthProvider();
-            signInWithRedirect(auth, provider);
-        });
-
-        getRedirectResult(auth).catch((error) => {
-            console.error("Login Error:", error);
-            if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
-                alert("Login Failed: " + error.message);
-            }
-            loginBtn.disabled = false;
-            loginBtn.innerHTML = `Sign in with Google`;
-        });
-
+loginBtn.addEventListener('click', () => {
+    loginBtn.disabled = true;
+    const originalText = loginBtn.innerText;
+    loginBtn.innerHTML = `<span class="material-symbols-outlined text-sm animate-spin inline-block align-middle mr-2">refresh</span> Connecting...`;
+    
+    signInWithPopup(auth, new GoogleAuthProvider()).catch(err => {
+        // If they just close the popup, don't show an ugly error, just reset the button
+        if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+            alert("Login Failed: " + err.message);
+        }
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = originalText;
+    });
+});
         document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth).then(() => location.reload()));
         document.getElementById('logoutDeniedBtn').addEventListener('click', () => signOut(auth).then(() => location.reload()));
 
