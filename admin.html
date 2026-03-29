@@ -1,132 +1,130 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3Dmosta | Admin Command Center</title>
-
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Admin Command Center | 3Dmosta</title>
+    
     <link rel="icon" type="image/x-icon" href="favicon.ico?v=2">
 
-    <style>
-        :root {
-            --primary: #00d2ff;
-            --secondary: #3a7bd5;
-            --dark-bg: #0f172a;
-            --glass: rgba(255, 255, 255, 0.05);
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#72dcff",
+                        "secondary": "#65a1fe",
+                        "background": "#060e20",
+                        "surface-container": "#0f1930",
+                        "surface-container-low": "#091328",
+                        "surface-container-high": "#141f38",
+                        "surface-container-highest": "#192540",
+                        "surface-container-lowest": "#000000",
+                        "on-background": "#dee5ff",
+                        "on-surface": "#dee5ff",
+                        "on-surface-variant": "#a3aac4",
+                        "outline-variant": "#40485d",
+                        "error": "#ff716c",
+                        "error-dim": "#d7383b"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
         }
-
-        body { font-family: 'Inter', -apple-system, sans-serif; background-color: var(--dark-bg); color: var(--text-main); margin: 0; padding: 0; min-height: 100vh; }
-        .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% -20%, #1e293b, #0f172a); z-index: -1; }
-
-        /* NAVBAR */
-        .navbar { position: fixed; top: 0; left: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; box-sizing: border-box; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); z-index: 100; }
-        .nav-logo { font-size: 24px; font-weight: 800; color: white; text-decoration: none; letter-spacing: -1px; }
-        .admin-badge { background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid rgba(239, 68, 68, 0.3); margin-left: 10px;}
-
-        /* LAYOUT */
-        .dashboard-container { max-width: 1100px; margin: 100px auto 40px; padding: 0 20px; position: relative; z-index: 10; }
-        .glass-panel { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+    </script>
+    <style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-panel { background: rgba(15, 25, 48, 0.5); backdrop-filter: blur(16px); border: 1px solid rgba(64, 72, 93, 0.15); }
+        .ghost-border { border-bottom: 1px solid rgba(109, 117, 140, 0.2); }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #40485d; border-radius: 10px; }
         
-        .header-panel { padding: 30px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
-        .header-panel h2 { margin: 0; color: white; font-size: 28px; }
-        .header-panel p { color: var(--text-dim); margin: 5px 0 0 0; }
-        
-        #login-section, #denied-section { text-align: center; padding: 50px; max-width: 400px; margin: 150px auto; position: relative; z-index: 10; }
-        #login-section h2, #denied-section h2 { color: white; margin-top: 0; }
-        #dashboard-ui, #denied-section { display: none; }
-
-        /* BUTTONS */
-        button { border: none; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-size: 15px; font-weight: bold; transition: all 0.2s; }
-        .btn-google { background: white; color: #333; width: 100%; font-size: 16px; margin-top: 15px; }
-        .btn-google:hover { background: #f8fafc; transform: translateY(-2px); }
-        .btn-logout { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
-        .btn-logout:hover { background: rgba(255, 255, 255, 0.2); }
-        
-        .btn-upgrade { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; width: 100%; margin-top: 15px; }
-        .btn-upgrade:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(0, 210, 255, 0.4); }
-        
-        .btn-downgrade { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); width: 100%; margin-top: 10px; }
-        .btn-downgrade:hover { background: #ef4444; color: #fff; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
-
-        .btn-save-limits { background: #10b981; color: white; width: 100%; margin-top: 10px; padding: 8px; font-size: 13px; }
-        .btn-save-limits:hover { background: #059669; }
-
-        /* USER GRID */
-        .users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 30px; }
-        .user-card { padding: 25px; display: flex; flex-direction: column; }
-        .user-card h3 { margin: 0 0 5px 0; font-size: 18px; color: white; word-break: break-all; }
-        
-        .stats-box { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin: 15px 0; }
-        .stat-line { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; color: var(--text-dim); }
-        .stat-line strong { color: var(--text-main); }
-        
-        .admin-input { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 6px; border-radius: 6px; width: 60px; text-align: center; font-weight: bold;}
-        
-        .badge-pro { background: rgba(34, 197, 94, 0.2); color: #4ade80; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid rgba(34, 197, 94, 0.3); }
-        .badge-free { background: rgba(255, 255, 255, 0.1); color: var(--text-dim); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid rgba(255, 255, 255, 0.2); }
-
-        /* INDIVIDUAL MODELS LIST */
-        .model-list { margin-top: 10px; max-height: 180px; overflow-y: auto; padding-right: 5px; }
-        .model-list::-webkit-scrollbar { width: 6px; }
-        .model-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 10px; }
-        .model-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
-
-        .model-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.03); }
-        .model-item-info { display: flex; flex-direction: column; gap: 3px; overflow: hidden; }
-        .model-item-title { font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; color: white; }
-        .model-item-scans { font-size: 11px; color: var(--text-dim); }
-        
-        .model-actions { display: flex; gap: 6px; }
-        .btn-tiny { padding: 6px 10px; font-size: 11px; border-radius: 6px; }
-        .btn-tiny-view { background: rgba(0, 210, 255, 0.1); color: var(--primary); border: 1px solid rgba(0, 210, 255, 0.3); }
-        .btn-tiny-view:hover { background: var(--primary); color: #000; box-shadow: 0 0 10px rgba(0, 210, 255, 0.4); }
-        .btn-tiny-delete { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
-        .btn-tiny-delete:hover { background: #ef4444; color: #fff; box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
-
+        /* Removes number input arrows */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
-<body>
+<body class="bg-background text-on-surface font-body selection:bg-primary/30 min-h-screen relative">
 
-    <div class="bg-glow"></div>
-
-    <nav class="navbar">
-        <div style="display: flex; align-items: center;">
-            <a href="index.html" class="nav-logo">3Dmosta</a>
-            <span class="admin-badge">ADMIN</span>
-        </div>
-    </nav>
-
-    <div id="login-section" class="glass-panel">
-        <h2>Admin Authentication</h2>
-        <p>Restricted access. Please sign in.</p>
-        <button id="loginBtn" class="btn-google">Sign in with Google</button>
-    </div>
-
-    <div id="denied-section" class="glass-panel">
-        <h2 style="color: #ef4444;">Access Denied</h2>
-        <p>Your account does not have administrator privileges.</p>
-        <button id="logoutDeniedBtn" class="btn-logout" style="margin-top: 15px; width: 100%;">Sign Out</button>
-    </div>
-
-    <div id="dashboard-ui" class="dashboard-container">
-        
-        <div class="header-panel glass-panel">
-            <div>
-                <h2>User Management</h2>
-                <p>Monitor users, update AI limits, and manage content.</p>
+    <div id="login-section" class="fixed inset-0 z-[100] bg-background/90 backdrop-blur-lg flex items-center justify-center p-6 hidden">
+        <div class="max-w-md w-full glass-panel p-10 rounded-lg space-y-8">
+            <div class="text-center">
+                <div class="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent font-headline tracking-tight mb-2">3Dmosta</div>
+                <p class="text-on-surface-variant text-sm font-label uppercase tracking-widest">Administrative Authentication</p>
             </div>
-            <button id="logoutBtn" class="btn-logout">Sign Out</button>
+            
+            <p class="text-center text-sm text-outline-variant">Restricted access. Please sign in using an authorized administrator account.</p>
+            
+            <button id="loginBtn" class="w-full flex items-center justify-center gap-4 bg-white text-black py-4 rounded-lg font-bold hover:bg-slate-200 transition-all shadow-[0_0_20px_rgba(0,210,255,0.1)]">
+                <svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"></path><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path></svg>
+                Initialize Session
+            </button>
         </div>
+    </div>
 
-        <div class="users-grid" id="users-grid"></div>
+    <div id="denied-section" class="fixed inset-0 z-[100] bg-background/95 backdrop-blur-xl flex items-center justify-center p-6 hidden">
+        <div class="max-w-md w-full glass-panel p-10 rounded-lg text-center space-y-6 border border-error/30">
+            <div class="w-20 h-20 bg-error/10 text-error rounded-full flex items-center justify-center mx-auto mb-4 border border-error/20">
+                <span class="material-symbols-outlined text-5xl">gpp_bad</span>
+            </div>
+            <h2 class="text-3xl font-headline font-bold text-white">Access Denied</h2>
+            <p class="text-on-surface-variant text-sm">Your account does not have sufficient clearance to access the Command Center.</p>
+            <button id="logoutDeniedBtn" class="w-full py-3 bg-surface-container-highest hover:bg-surface-variant transition-colors rounded font-bold text-white">Return to Safety (Sign Out)</button>
+        </div>
+    </div>
 
+    <div id="dashboard-ui" class="hidden">
+        
+        <nav class="bg-slate-900/40 backdrop-blur-3xl border-b border-white/10 top-0 sticky z-50 shadow-[0_0_15px_rgba(0,210,255,0.1)]">
+            <div class="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
+                <div class="flex items-center">
+                    <a href="index.html" class="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent font-headline tracking-tight">3Dmosta</a>
+                    <span class="text-[10px] font-bold uppercase tracking-widest bg-error/10 text-error border border-error/20 px-2 py-0.5 rounded ml-3">ADMIN</span>
+                </div>
+                <div class="flex items-center space-x-8">
+                    <button id="logoutBtn" class="flex items-center space-x-2 text-error hover:text-error-dim transition-colors font-medium">
+                        <span class="material-symbols-outlined text-sm">logout</span>
+                        <span class="text-sm">Sign Out</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="max-w-7xl mx-auto px-6 py-12">
+            
+            <div class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div class="space-y-2">
+                    <h1 class="text-4xl md:text-5xl font-headline font-bold text-white tracking-tight">Command Center</h1>
+                    <p class="text-on-surface-variant max-w-2xl">Monitor model generations, manage user quotas, and oversee global asset distribution.</p>
+                </div>
+            </div>
+
+            <div id="users-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            </div>
+
+        </main>
+
+        <footer class="bg-slate-950/60 backdrop-blur-2xl w-full border-t border-white/5 mt-12">
+            <div class="flex flex-col md:flex-row justify-between items-center py-12 px-8 max-w-7xl mx-auto space-y-4 md:space-y-0">
+                <div class="text-lg font-bold text-white font-headline">3Dmosta Admin</div>
+                <div class="text-slate-500 font-body text-sm tracking-wide">© 2026 3Dmosta. All rights reserved.</div>
+            </div>
+        </footer>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, collection, query, where, getDocs, doc, updateDoc, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getStorage, ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
@@ -144,46 +142,62 @@
         const db = getFirestore(app);
         const storage = getStorage(app);
 
-        // Make sure to replace this with your actual admin email!
+        // --- IMPORTANT: SET YOUR ADMIN EMAIL HERE ---
         const ADMIN_EMAIL = "mostafaebrahiem1998@gmail.com";
 
         const loginSec = document.getElementById('login-section');
         const deniedSec = document.getElementById('denied-section');
         const dashboardUI = document.getElementById('dashboard-ui');
         const usersGrid = document.getElementById('users-grid');
+        const loginBtn = document.getElementById('loginBtn');
         
-        document.getElementById('loginBtn').addEventListener('click', () => {
-            signInWithPopup(auth, new GoogleAuthProvider()).catch(err => alert(err.message));
+        // LOGIN ROUTING
+        loginBtn.addEventListener('click', () => {
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = `<span class="material-symbols-outlined text-black animate-spin">refresh</span> Connecting...`;
+            const provider = new GoogleAuthProvider();
+            signInWithRedirect(auth, provider);
+        });
+
+        getRedirectResult(auth).catch((error) => {
+            console.error("Login Error:", error);
+            if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
+                alert("Login Failed: " + error.message);
+            }
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = `Sign in with Google`;
         });
 
         document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth).then(() => location.reload()));
         document.getElementById('logoutDeniedBtn').addEventListener('click', () => signOut(auth).then(() => location.reload()));
 
+        // SECURITY CHECK
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 if (user.email === ADMIN_EMAIL) {
-                    loginSec.style.display = 'none';
-                    deniedSec.style.display = 'none';
-                    dashboardUI.style.display = 'block';
+                    loginSec.classList.add('hidden');
+                    deniedSec.classList.add('hidden');
+                    dashboardUI.classList.remove('hidden');
                     loadAllUsers();
                 } else {
-                    loginSec.style.display = 'none';
-                    deniedSec.style.display = 'block';
-                    dashboardUI.style.display = 'none';
+                    loginSec.classList.add('hidden');
+                    deniedSec.classList.remove('hidden');
+                    dashboardUI.classList.add('hidden');
                 }
             } else {
-                loginSec.style.display = 'block';
-                deniedSec.style.display = 'none';
-                dashboardUI.style.display = 'none';
+                loginSec.classList.remove('hidden');
+                deniedSec.classList.add('hidden');
+                dashboardUI.classList.add('hidden');
             }
         });
 
+        // FETCH AND RENDER USERS
         async function loadAllUsers() {
-            usersGrid.innerHTML = "<p style='grid-column: 1 / -1; text-align: center; color: var(--text-dim);'>Fetching database...</p>";
+            usersGrid.innerHTML = "<p class='col-span-full text-center text-on-surface-variant py-12'>Fetching global database...</p>";
             
             const usersMap = {};
 
-            // 1. Fetch User Profiles (Billing & Limits)
+            // 1. Get Profiles
             const usersSnapshot = await getDocs(collection(db, "users"));
             usersSnapshot.forEach(docSnap => {
                 const data = docSnap.data();
@@ -192,25 +206,24 @@
                     isPro: data.isPro || false,
                     aiUsed: data.aiGenerationsUsed || 0,
                     aiAllowed: data.aiGenerationsAllowed || 0,
-                    maxScans: data.maxScans || 3,
+                    maxScans: data.maxScans || 100, 
                     models: []
                 };
             });
 
-            // 2. Fetch Models and attach to Users
+            // 2. Get Models and attach to profiles
             const modelsSnapshot = await getDocs(collection(db, "clients"));
             modelsSnapshot.forEach(docSnap => {
                 const data = docSnap.data();
                 const uid = data.uid;
                 
-                // If user uploaded a model but doesn't have a profile yet (legacy data)
                 if (!usersMap[uid]) {
                     usersMap[uid] = { 
                         email: data.userEmail || "Unknown", 
-                        isPro: data.maxScans > 3, 
+                        isPro: data.maxScans > 100, 
                         aiUsed: 0, 
-                        aiAllowed: data.maxScans > 3 ? 10 : 0, 
-                        maxScans: data.maxScans || 3,
+                        aiAllowed: data.maxScans > 100 ? 10 : 0, 
+                        maxScans: data.maxScans || 100,
                         models: [] 
                     };
                 }
@@ -218,91 +231,120 @@
             });
 
             if (Object.keys(usersMap).length === 0) {
-                usersGrid.innerHTML = "<p style='grid-column: 1 / -1; text-align: center; color: var(--text-dim);'>No users found in database.</p>";
+                usersGrid.innerHTML = "<p class='col-span-full text-center text-on-surface-variant py-12'>No users found in database.</p>";
                 return;
             }
 
             usersGrid.innerHTML = ""; 
 
-            // 3. Render User Cards
+            // 3. Generate HTML Cards
             Object.keys(usersMap).forEach(uid => {
                 const userData = usersMap[uid];
-                const statusBadge = userData.isPro ? `<span class="badge-pro">PRO PLAN</span>` : `<span class="badge-free">FREE TIER</span>`;
+                
+                // Tailwind specific badges
+                const statusBadge = userData.isPro 
+                    ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-widest bg-primary/10 text-primary border border-primary/20">PRO PLAN</span>` 
+                    : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-widest bg-outline-variant/20 text-on-surface-variant border border-outline-variant/30">FREE TIER</span>`;
 
-                let modelsHTML = '<div class="model-list">';
-                userData.models.forEach(model => {
-                    const displayName = model.fileName ? model.fileName.replace('.glb', '') : 'Unnamed Model';
-                    const scansUsed = model.scanCount || 0;
-                    const encodedUrl = encodeURIComponent(model.modelUrl);
+                let modelsHTML = '<div class="max-h-48 overflow-y-auto space-y-2 pr-2">';
+                if(userData.models.length === 0) {
+                    modelsHTML += `<p class="text-xs text-on-surface-variant italic p-2">No files uploaded.</p>`;
+                } else {
+                    userData.models.forEach(model => {
+                        const displayName = model.fileName ? model.fileName.replace('.glb', '') : 'Unnamed Asset';
+                        const scansUsed = model.scanCount || 0;
+                        const encodedUrl = encodeURIComponent(model.modelUrl);
 
-                    modelsHTML += `
-                        <div class="model-item" id="model-item-${model.id}">
-                            <div class="model-item-info">
-                                <span class="model-item-title" title="${displayName}">${displayName}</span>
-                                <span class="model-item-scans">Scans: ${scansUsed} / ${model.maxScans || 3}</span>
+                        modelsHTML += `
+                            <div class="flex items-center justify-between p-3 bg-surface-container-high/40 rounded border border-white/5" id="model-item-${model.id}">
+                                <div class="flex flex-col truncate pr-2">
+                                    <span class="text-sm font-medium text-white truncate" title="${displayName}">${displayName}</span>
+                                    <span class="text-xs text-on-surface-variant">Usage: ${scansUsed}/${model.maxScans || 100} scans</span>
+                                </div>
+                                <div class="flex space-x-2 flex-shrink-0">
+                                    <button class="p-2 hover:bg-primary/10 text-primary rounded transition-colors" onclick="window.open('fallback.html?model=${encodedUrl}', '_blank')"><span class="material-symbols-outlined text-sm">visibility</span></button>
+                                    <button class="p-2 hover:bg-error/10 text-error rounded transition-colors delete-model-btn" data-id="${model.id}" data-uid="${uid}" data-filename="${model.fileName}" data-name="${displayName}"><span class="material-symbols-outlined text-sm pointer-events-none">delete</span></button>
+                                </div>
                             </div>
-                            <div class="model-actions">
-                                <button class="btn-tiny btn-tiny-view" onclick="window.open('fallback.html?model=${encodedUrl}', '_blank')">View</button>
-                                <button class="btn-tiny btn-tiny-delete delete-model-btn" data-id="${model.id}" data-uid="${uid}" data-filename="${model.fileName}" data-name="${displayName}">Delete</button>
-                            </div>
-                        </div>
-                    `;
-                });
+                        `;
+                    });
+                }
                 modelsHTML += '</div>';
 
                 const card = document.createElement('div');
-                card.className = 'user-card glass-panel';
+                card.className = 'glass-panel rounded-xl overflow-hidden flex flex-col';
                 card.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <h3>${userData.email}</h3>
-                    </div>
-                    ${statusBadge}
-                    
-                    <div class="stats-box">
-                        <div class="stat-line"><span>Uploaded Models:</span> <strong>${userData.models.length}</strong></div>
-                        <div class="stat-line"><span>AI Generations Used:</span> <strong>${userData.aiUsed}</strong></div>
-                        
-                        <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 10px 0;"></div>
-                        
-                        <div class="stat-line">
-                            <span>Max AI Models Allowed:</span> 
-                            <input type="number" id="ai-allow-${uid}" class="admin-input" value="${userData.aiAllowed}">
+                    <div class="p-8 border-b border-outline-variant/10">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 rounded bg-surface-container-highest flex items-center justify-center border border-outline-variant/20">
+                                    <span class="material-symbols-outlined ${userData.isPro ? 'text-primary' : 'text-on-surface-variant'} text-3xl">account_circle</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-white max-w-[200px] truncate" title="${userData.email}">${userData.email}</h3>
+                                    ${statusBadge}
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-on-surface-variant font-label uppercase mb-1">Assets</div>
+                                <div class="text-2xl font-headline font-bold text-white">${userData.models.length}</div>
+                            </div>
                         </div>
-                        <div class="stat-line">
-                            <span>Max AR Scans (Per Code):</span> 
-                            <input type="number" id="scans-allow-${uid}" class="admin-input" value="${userData.maxScans}">
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-8">
+                            <div class="bg-surface-container-lowest p-4 rounded border border-outline-variant/10">
+                                <div class="text-xs text-on-surface-variant mb-1">AI Gens Used</div>
+                                <div class="text-xl font-headline font-bold text-white">${userData.aiUsed}</div>
+                            </div>
+                            <div class="bg-surface-container-lowest p-4 rounded border border-outline-variant/10">
+                                <div class="text-xs text-on-surface-variant mb-1">Scans Config</div>
+                                <div class="text-xl font-headline font-bold text-white">${userData.maxScans}</div>
+                            </div>
                         </div>
-                        <button class="btn-save-limits" id="save-limits-${uid}">Save Limits & Sync Models</button>
+
+                        <div class="space-y-6">
+                            <h4 class="text-sm font-bold text-on-surface-variant uppercase tracking-widest">Resource Limits</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-2">
+                                    <label class="text-xs text-on-surface-variant font-medium">Max AI Models</label>
+                                    <input type="number" id="ai-allow-${uid}" class="w-full bg-transparent border-b border-outline-variant/50 focus:border-primary focus:outline-none transition-colors py-1 text-white" value="${userData.aiAllowed}">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-xs text-on-surface-variant font-medium">Max AR Scans</label>
+                                    <input type="number" id="scans-allow-${uid}" class="w-full bg-transparent border-b border-outline-variant/50 focus:border-primary focus:outline-none transition-colors py-1 text-white" value="${userData.maxScans}">
+                                </div>
+                            </div>
+                            <button id="save-limits-${uid}" class="w-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 py-3 rounded-lg font-bold transition-all transform active:scale-[0.98]">
+                                Save Limits & Sync
+                            </button>
+                        </div>
                     </div>
                     
-                    <strong style="font-size: 13px; color: var(--text-dim); margin-top: 5px;">User Files:</strong>
-                    ${modelsHTML}
-                    
-                    <div style="margin-top: 15px; display: flex; gap: 10px;">
-                        <button id="upgrade-${uid}" class="btn-upgrade" ${userData.isPro ? 'style="display:none;"' : ''}>Grant Pro Access</button>
-                        <button id="downgrade-${uid}" class="btn-downgrade" ${!userData.isPro ? 'style="display:none;"' : ''}>Revoke Pro Access</button>
+                    <div class="p-8 bg-surface-container-low/30 flex-grow flex flex-col">
+                        <h4 class="text-sm font-bold text-on-surface-variant uppercase tracking-widest mb-4">File Manifest</h4>
+                        ${modelsHTML}
+                        
+                        <div class="mt-auto pt-6 border-t border-outline-variant/10">
+                            <button id="upgrade-${uid}" class="w-full bg-primary text-slate-900 font-bold py-2 rounded text-sm transition-all hover:shadow-[0_0_15px_rgba(114,220,255,0.4)] ${userData.isPro ? 'hidden' : ''}">Grant Pro Access</button>
+                            <button id="downgrade-${uid}" class="w-full text-error border border-error/30 hover:bg-error/10 py-2 rounded text-sm font-medium transition-colors ${!userData.isPro ? 'hidden' : ''}">Revoke Pro Access</button>
+                        </div>
                     </div>
                 `;
                 usersGrid.appendChild(card);
 
-                // --- ATTACH EVENT LISTENERS ---
-
-                // Save Limits & Sync
+                // --- EVENT LISTENERS FOR ADMIN CONTROLS ---
+                
+                // 1. Save Limits
                 document.getElementById(`save-limits-${uid}`).addEventListener('click', async (e) => {
-                    e.target.innerText = "Saving...";
+                    e.target.innerHTML = `<span class="material-symbols-outlined text-sm animate-spin inline-block align-middle">refresh</span> Saving...`;
                     e.target.disabled = true;
                     
                     const newAiLimit = parseInt(document.getElementById(`ai-allow-${uid}`).value);
                     const newScanLimit = parseInt(document.getElementById(`scans-allow-${uid}`).value);
 
                     try {
-                        // 1. Update User Profile
-                        await updateDoc(doc(db, "users", uid), {
-                            aiGenerationsAllowed: newAiLimit,
-                            maxScans: newScanLimit
-                        });
+                        await updateDoc(doc(db, "users", uid), { aiGenerationsAllowed: newAiLimit, maxScans: newScanLimit });
 
-                        // 2. Sync all their existing models to the new Scan Limit
                         const batch = writeBatch(db);
                         userData.models.forEach(model => {
                             batch.update(doc(db, "clients", model.id), { maxScans: newScanLimit });
@@ -310,26 +352,29 @@
                         await batch.commit();
 
                         e.target.innerText = "Saved!";
-                        setTimeout(() => e.target.innerText = "Save Limits & Sync Models", 2000);
-                        e.target.disabled = false;
+                        e.target.classList.add('bg-green-500/20', 'text-green-400', 'border-green-500/30');
+                        
+                        setTimeout(() => {
+                            e.target.innerText = "Save Limits & Sync";
+                            e.target.classList.remove('bg-green-500/20', 'text-green-400', 'border-green-500/30');
+                            e.target.disabled = false;
+                        }, 2000);
                     } catch (error) {
                         alert("Error saving limits: " + error.message);
-                        e.target.innerText = "Save Limits & Sync Models";
+                        e.target.innerText = "Save Limits & Sync";
                         e.target.disabled = false;
                     }
                 });
 
-                // Upgrade to Pro
+                // 2. Grant Pro
                 if(!userData.isPro) {
                     document.getElementById(`upgrade-${uid}`).addEventListener('click', async (e) => {
-                        if(confirm(`Upgrade ${userData.email} to PRO?`)) {
+                        if(confirm(`Grant PRO to ${userData.email}?`)) {
                             e.target.innerText = "Upgrading...";
                             e.target.disabled = true;
                             
-                            // Update Profile
                             await updateDoc(doc(db, "users", uid), { isPro: true, maxScans: 1000, aiGenerationsAllowed: 10 });
 
-                            // Update Models
                             const batch = writeBatch(db);
                             userData.models.forEach(model => { batch.update(doc(db, "clients", model.id), { maxScans: 1000 }); });
                             await batch.commit();
@@ -339,19 +384,17 @@
                     });
                 }
 
-                // Downgrade to Free
+                // 3. Revoke Pro
                 if(userData.isPro) {
                     document.getElementById(`downgrade-${uid}`).addEventListener('click', async (e) => {
-                        if(confirm(`Downgrade ${userData.email} to FREE?`)) {
+                        if(confirm(`Revoke PRO from ${userData.email}? (Will reset to 100 scans)`)) {
                             e.target.innerText = "Downgrading...";
                             e.target.disabled = true;
                             
-                            // Update Profile
-                            await updateDoc(doc(db, "users", uid), { isPro: false, maxScans: 3, aiGenerationsAllowed: 0 });
+                            await updateDoc(doc(db, "users", uid), { isPro: false, maxScans: 100, aiGenerationsAllowed: 0 });
 
-                            // Update Models
                             const batch = writeBatch(db);
-                            userData.models.forEach(model => { batch.update(doc(db, "clients", model.id), { maxScans: 3 }); });
+                            userData.models.forEach(model => { batch.update(doc(db, "clients", model.id), { maxScans: 100 }); });
                             await batch.commit();
                             
                             location.reload();
@@ -360,16 +403,18 @@
                 }
             });
 
-            // Delete Model Listener
+            // 4. Delete Model Listener
             document.querySelectorAll('.delete-model-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
+                    // Because we have an icon inside the button, e.target might be the span or the button. 
+                    // Added pointer-events-none to the span in HTML to fix this, so e.target is always the button.
                     const docId = e.target.getAttribute('data-id');
                     const fileUid = e.target.getAttribute('data-uid');
                     const fileName = e.target.getAttribute('data-filename');
                     const modelName = e.target.getAttribute('data-name');
                     
-                    if(confirm(`ADMIN WARNING: Delete "${modelName}"?`)) {
-                        e.target.innerText = "...";
+                    if(confirm(`ADMIN OVERRIDE: Delete "${modelName}" permanently?`)) {
+                        e.target.innerHTML = `<span class="material-symbols-outlined text-sm animate-spin">refresh</span>`;
                         e.target.disabled = true;
                         try {
                             if (fileName) {
@@ -380,7 +425,7 @@
                             document.getElementById(`model-item-${docId}`).remove();
                         } catch(error) {
                             alert("Failed to delete model.");
-                            e.target.innerText = "Delete";
+                            e.target.innerHTML = `<span class="material-symbols-outlined text-sm">delete</span>`;
                             e.target.disabled = false;
                         }
                     }
