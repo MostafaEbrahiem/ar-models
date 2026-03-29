@@ -1,13 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Viewer | 3Dmosta</title>
-
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>3Dmosta | Fullscreen AR Viewer</title>
+    
     <link rel="icon" type="image/x-icon" href="favicon.ico?v=2">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
-
+    
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-B80PCPRNQ9"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -16,70 +15,143 @@
       gtag('config', 'G-B80PCPRNQ9');
     </script>
 
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js" type="module"></script>
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#72dcff",
+                        "secondary": "#65a1fe",
+                        "background": "#060e20",
+                        "surface-variant": "#192540",
+                        "surface-container-low": "#091328",
+                        "surface-container-high": "#141f38",
+                        "surface-container-lowest": "#000000",
+                        "on-surface": "#dee5ff",
+                        "on-surface-variant": "#a3aac4",
+                        "outline-variant": "#40485d",
+                        "error": "#ff716c",
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
     
     <style>
-        :root {
-            --primary: #00d2ff;
-            --secondary: #3a7bd5;
-            --dark-bg: #0f172a;
-            --glass: rgba(255, 255, 255, 0.05);
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000000;
         }
-
-        body { margin: 0; padding: 0; background-color: var(--dark-bg); overflow: hidden; height: 100vh; font-family: 'Inter', -apple-system, sans-serif; display: flex; flex-direction: column; color: var(--text-main); }
-        .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% -20%, #1e293b, #0f172a); z-index: -1; }
-        
-        #viewer-container { flex-grow: 1; width: 100%; height: 100%; position: relative; z-index: 10; }
-        model-viewer { width: 100%; height: 100%; background-color: transparent; }
-        
-        #error-message { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); display: none; text-align: center; padding: 40px 20px; z-index: 20; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 500px; box-sizing: border-box; }
-        #error-message h2 { color: #ef4444; margin-top: 0; }
-        #error-message p { color: var(--text-dim); }
-        #debug-text { font-family: monospace; font-size: 12px; color: #f8fafc; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: inline-block; max-width: 100%; word-break: break-all; margin-top: 20px; }
-        
-        /* Premium Glow Progress Bar */
-        .progress-bar { display: block; width: 60%; height: 12px; position: absolute; left: 20%; top: 50%; transform: translateY(-50%); border-radius: 99px; border: 1px solid rgba(255,255,255,0.1); background-color: rgba(255, 255, 255, 0.1); overflow: hidden; backdrop-filter: blur(4px);}
-        .progress-bar.hide { visibility: hidden; transition: visibility 0.3s; }
-        .update-bar { background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%; height: 100%; transition: width 0.3s; box-shadow: 0 0 15px var(--primary); }
+        model-viewer {
+            width: 100%;
+            height: 100%;
+            background-color: #000000;
+            --poster-color: transparent;
+            outline: none;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        #ar-button {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
     </style>
 </head>
-<body>
 
-    <div class="bg-glow"></div>
-
-    <div id="viewer-container">
-        <div id="error-message">
-            <h2>Model Failed to Load</h2>
-            <p>We encountered an issue loading the 3D file. The link may be broken or the model was deleted.</p>
-            <div id="debug-text">Waiting for error details...</div>
+<body class="bg-surface-container-lowest">
+    
+    <main class="relative w-full h-full">
+        
+        <div id="error-overlay" class="hidden absolute inset-0 z-[200] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center">
+            <span class="material-symbols-outlined text-6xl text-error mb-4">gpp_bad</span>
+            <h2 class="text-2xl font-headline font-bold text-white mb-2">Model Failed to Load</h2>
+            <p class="text-on-surface-variant text-sm mb-6 max-w-md">We encountered an issue loading the 3D file. The link may be broken, invalid, or the model was deleted by the owner.</p>
+            <p id="debug-text" class="text-xs text-outline-variant font-mono max-w-full break-all bg-surface-container-high p-4 rounded-lg border border-outline-variant/20"></p>
         </div>
 
         <model-viewer 
-            id="ar-viewer" 
+            id="main-viewer" 
+            class="w-full h-full" 
             crossorigin="anonymous"
-            alt="A 3D model"
+            alt="A high-fidelity 3D model hosted on 3Dmosta" 
+            ar 
+            ar-modes="webxr scene-viewer quick-look" 
             auto-rotate 
-            camera-controls 
             autoplay
-            environment-image="neutral"
+            camera-controls 
+            environment-image="neutral" 
+            exposure="1" 
             shadow-intensity="1"
             camera-orbit="auto auto 500%" 
-            max-camera-orbit="auto auto 1000%">
+            max-camera-orbit="auto auto 1000%"
+            src="">
             
-            <div class="progress-bar hide" slot="progress-bar">
-                <div class="update-bar"></div>
+            <button id="ar-button" slot="ar-button" class="bg-gradient-to-r from-primary to-secondary text-slate-900 px-6 py-3 font-headline font-bold text-sm tracking-tight rounded-lg shadow-[0_0_15px_rgba(0,210,255,0.4)] hover:scale-105 transition-transform z-50">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">view_in_ar</span>
+                VIEW IN YOUR SPACE
+            </button>
+            
+            <div slot="poster" id="loading-poster" class="absolute inset-0 flex items-center justify-center bg-surface-container-lowest z-40">
+                <div class="flex flex-col items-center gap-4">
+                    <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <span class="font-headline text-on-surface-variant tracking-widest text-xs uppercase">Initializing Hologram</span>
+                </div>
             </div>
+
+            <div class="absolute top-6 left-6 z-10">
+                <button onclick="window.history.back()" class="bg-surface-variant/40 backdrop-blur-xl border border-outline-variant/20 p-3 flex items-center justify-center rounded-xl text-on-surface hover:bg-surface-variant/60 transition-all active:scale-90 shadow-lg">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+            </div>
+
+            <div class="absolute top-6 right-6 z-10 text-right">
+                <div class="bg-surface-variant/40 backdrop-blur-xl border border-outline-variant/20 px-4 py-2 rounded-xl shadow-lg">
+                    <h1 id="asset-title" class="font-headline font-bold text-on-surface tracking-tight text-sm">LOADING ASSET...</h1>
+                    <p class="font-label text-[10px] text-on-surface-variant uppercase tracking-widest">3Dmosta Precision Engine</p>
+                </div>
+            </div>
+
         </model-viewer>
-    </div>
+
+        <footer class="absolute bottom-6 left-0 w-full flex justify-center pointer-events-none z-10">
+            <a href="index.html" class="pointer-events-auto group flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 transition-all hover:bg-black/60 shadow-lg">
+                <span class="text-[10px] font-label text-on-surface-variant tracking-[0.2em] uppercase">Powered by</span>
+                <span class="font-headline font-bold text-xs tracking-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent group-hover:opacity-80 transition-opacity">3Dmosta</span>
+            </a>
+        </footer>
+    </main>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         let modelUrl = urlParams.get('model');
-        const viewer = document.getElementById('ar-viewer');
-        const errorMsg = document.getElementById('error-message');
+        const viewer = document.getElementById('main-viewer');
+        const errorOverlay = document.getElementById('error-overlay');
         const debugText = document.getElementById('debug-text');
+        const assetTitle = document.getElementById('asset-title');
+        const loadingPoster = document.getElementById('loading-poster');
 
         if (modelUrl) {
             // Fixes Firebase storage URL formatting issues automatically
@@ -87,26 +159,22 @@
                 modelUrl = modelUrl.replace('/o/models/', '/o/models%2F');
             }
 
+            // Set the 3D model source
             viewer.setAttribute('src', modelUrl);
+            assetTitle.innerText = "HOLOGRAPHIC ASSET";
             
-            viewer.addEventListener('progress', (event) => {
-                const progressBar = viewer.querySelector('.progress-bar');
-                const updateBar = viewer.querySelector('.update-bar');
-                updateBar.style.width = `${event.detail.totalProgress * 100}%`;
-                if (event.detail.totalProgress === 1) progressBar.classList.add('hide');
-                else progressBar.classList.remove('hide');
-            });
-
+            // Handle loading errors
             viewer.addEventListener('error', (event) => {
-                viewer.style.display = 'none';
-                errorMsg.style.display = 'block';
+                loadingPoster.style.display = 'none';
+                errorOverlay.classList.remove('hidden');
                 debugText.innerText = "Attempted to load:\n" + modelUrl;
             });
 
         } else {
-            viewer.style.display = 'none';
-            errorMsg.style.display = 'block';
-            debugText.innerText = "No model ID was found in the web address.";
+            // No model provided in the URL
+            loadingPoster.style.display = 'none';
+            errorOverlay.classList.remove('hidden');
+            debugText.innerText = "No model ID was found in the web address parameters.";
         }
     </script>
 </body>
