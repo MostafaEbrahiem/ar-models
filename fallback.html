@@ -92,7 +92,6 @@
             <p id="debug-text" class="text-xs text-outline-variant font-mono max-w-full break-all bg-surface-container-high p-4 rounded-lg border border-outline-variant/20"></p>
         </div>
 
-        <!-- max-camera-orbit changed from 1000% to 200% to limit zoom out -->
         <model-viewer 
             id="main-viewer" 
             class="w-full h-full" 
@@ -115,7 +114,6 @@
                 VIEW IN YOUR SPACE
             </button>
             
-            <!-- New Loading Bar UI -->
             <div slot="poster" id="loading-poster" class="absolute inset-0 flex flex-col items-center justify-center bg-surface-container-lowest z-40">
                 <div class="w-64 max-w-[80vw]">
                     <div class="h-1.5 w-full bg-surface-variant rounded-full overflow-hidden border border-white/5">
@@ -173,30 +171,31 @@
             viewer.setAttribute('src', modelUrl);
             assetTitle.innerText = "HOLOGRAPHIC ASSET";
             
-            // --- STRICT ANDROID AUDIO FIX ---
+            // --- UPDATED AUDIO LOGIC ---
             if (audioUrl) {
                 const interactionSound = new Audio(audioUrl);
                 interactionSound.loop = true; 
-                interactionSound.crossOrigin = "anonymous"; // Prevents CORS blocking
+                // REMOVED crossOrigin="anonymous" to fix the Firebase fetching error
                 let hasPlayed = false;
 
-                const unlockAudio = () => {
+                const unlockAudio = (e) => {
                     if (!hasPlayed) {
+                        hasPlayed = true; // Lock immediately so multiple fingers don't trigger it 10 times
                         interactionSound.play().then(() => {
-                            hasPlayed = true;
-                            // Clean up listeners so it doesn't try to restart on every tap
-                            window.removeEventListener('touchstart', unlockAudio);
-                            window.removeEventListener('mousedown', unlockAudio);
+                            // Audio is successfully playing, remove listeners
+                            window.removeEventListener('pointerdown', unlockAudio, true);
+                            window.removeEventListener('touchstart', unlockAudio, true);
                         }).catch(error => {
-                            console.log("Audio blocked by browser:", error);
+                            console.log("Audio play prevented, waiting for next touch:", error);
+                            hasPlayed = false; // Reset if it failed so the next touch can try again
                         });
                     }
                 };
 
-                // Attaching to the global window object ensures the strictest Android 
-                // browsers register the user intent properly, unlike attaching to the viewer.
-                window.addEventListener('touchstart', unlockAudio, { once: true });
-                window.addEventListener('mousedown', unlockAudio, { once: true });
+                // Use "capture: true" (the 'true' at the end) to intercept the touch 
+                // BEFORE the <model-viewer> swallows the event for 3D rotation.
+                window.addEventListener('pointerdown', unlockAudio, true);
+                window.addEventListener('touchstart', unlockAudio, true);
             }
 
             viewer.addEventListener('error', (event) => {
