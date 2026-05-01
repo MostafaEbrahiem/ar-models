@@ -135,6 +135,15 @@
                             <model-viewer id="local-viewer" auto-rotate camera-controls autoplay environment-image="neutral" shadow-intensity="1" camera-orbit="auto auto 500%" max-camera-orbit="auto auto 1000%" class="absolute inset-0 w-full h-full"></model-viewer>
                         </div>
 
+                        <!-- NEW: Optional Audio Upload -->
+                        <div id="audio-upload-container" class="hidden mt-4 bg-surface-container-low p-4 rounded-xl border border-outline-variant/30">
+                            <label for="audioInput" class="block text-sm font-bold text-on-surface mb-2 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary text-sm">audio_file</span> Add Interaction Sound (Optional)
+                            </label>
+                            <input type="file" id="audioInput" accept="audio/mp3, audio/wav, audio/ogg" class="block w-full text-xs text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer transition-colors">
+                            <p class="text-[10px] text-on-surface-variant mt-2 uppercase tracking-widest">Plays upon first touch interaction</p>
+                        </div>
+
                         <div id="progress-wrapper" class="hidden mt-6 space-y-2">
                             <div class="flex justify-between text-sm">
                                 <span id="progress-text" class="text-primary font-bold">0% Uploading...</span>
@@ -250,20 +259,19 @@
         let userIsPro = false; 
 
         // AUTHENTICATION
-loginBtn.addEventListener('click', () => {
-    loginBtn.disabled = true;
-    const originalText = loginBtn.innerText;
-    loginBtn.innerHTML = `<span class="material-symbols-outlined text-sm animate-spin inline-block align-middle mr-2">refresh</span> Connecting...`;
-    
-    signInWithPopup(auth, new GoogleAuthProvider()).catch(err => {
-        // If they just close the popup, don't show an ugly error, just reset the button
-        if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-            alert("Login Failed: " + err.message);
-        }
-        loginBtn.disabled = false;
-        loginBtn.innerHTML = originalText;
-    });
-});
+        loginBtn.addEventListener('click', () => {
+            loginBtn.disabled = true;
+            const originalText = loginBtn.innerText;
+            loginBtn.innerHTML = `<span class="material-symbols-outlined text-sm animate-spin inline-block align-middle mr-2">refresh</span> Connecting...`;
+            
+            signInWithPopup(auth, new GoogleAuthProvider()).catch(err => {
+                if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+                    alert("Login Failed: " + err.message);
+                }
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = originalText;
+            });
+        });
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -384,7 +392,6 @@ loginBtn.addEventListener('click', () => {
                 const card = document.createElement('div');
                 card.className = 'glass-panel rounded-xl overflow-hidden flex flex-col group hover:translate-y-[-4px] transition-transform duration-300';
                 
-                // Restored `autoplay` and `camera-orbit` zooms to the gallery preview
                 card.innerHTML = `
                     <div class="aspect-square bg-black/40 relative">
                         <div class="absolute inset-0 flex items-center justify-center">
@@ -394,6 +401,7 @@ loginBtn.addEventListener('click', () => {
                             <span class="w-1.5 h-1.5 rounded-full ${dotColorClass}"></span>
                             ${scanText}
                         </div>
+                        ${data.audioUrl ? '<div class="absolute top-4 right-4 bg-primary/20 backdrop-blur-sm text-primary border border-primary/30 p-1.5 rounded-full flex"><span class="material-symbols-outlined text-sm">volume_up</span></div>' : ''}
                     </div>
                     <div class="p-6 space-y-4 flex-grow flex flex-col">
                         <div class="flex justify-between items-start">
@@ -418,29 +426,30 @@ loginBtn.addEventListener('click', () => {
 
                 modelsGrid.appendChild(card);
 
-                // FIX 1: Generate a crisp 512x512 High-Res QR code! The CSS `.qr-ui-wrapper` visually shrinks it down to fit the UI box perfectly.
                 const qrContainer = document.getElementById(`qr-${docId}`);
                 new QRCode(qrContainer, { text: clientLink, width: 512, height: 512, colorDark : "#000000", colorLight : "#ffffff" });
 
                 document.getElementById(`viewBtn-${docId}`).addEventListener('click', () => {
                     const encodedUrl = encodeURIComponent(safeUrl); 
-                    window.open(`fallback.html?model=${encodedUrl}`, '_blank');
+                    let targetUrl = `fallback.html?model=${encodedUrl}`;
+                    // Append audio parameter if available
+                    if (data.audioUrl) {
+                        targetUrl += `&audio=${encodeURIComponent(data.audioUrl)}`;
+                    }
+                    window.open(targetUrl, '_blank');
                 });
 
-                // FIX 2: Fully Restored 6x6 Grid Logic using the high-res base image
                 document.getElementById(`downloadBtn-${docId}`).addEventListener('click', () => {
                     const canvas = qrContainer.querySelector('canvas');
                     const img = qrContainer.querySelector('img');
                     let qrDataUrl = canvas ? canvas.toDataURL('image/png') : (img ? img.src : null);
 
                     if (qrDataUrl) {
-                        // Download Single
                         const linkSingle = document.createElement('a');
                         linkSingle.href = qrDataUrl;
                         linkSingle.download = `3Dmosta_${displayName}_Single_QR.png`;
                         linkSingle.click();
 
-                        // Create 6x6 Grid
                         const imgObj = new Image();
                         imgObj.onload = function() {
                             const gridCanvas = document.createElement('canvas');
@@ -460,7 +469,6 @@ loginBtn.addEventListener('click', () => {
                                 for (let c = 0; c < cols; c++) {
                                     const x = padding + c * (qrSize + padding);
                                     const y = padding + r * (qrSize + padding);
-                                    // Draws the 512x512 image into the 150x150 grid slot beautifully
                                     ctx.drawImage(imgObj, x, y, qrSize, qrSize);
                                     ctx.strokeStyle = '#cbd5e1';
                                     ctx.lineWidth = 1;
@@ -512,6 +520,9 @@ loginBtn.addEventListener('click', () => {
         const progressWrapper = document.getElementById('progress-wrapper');
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
+        
+        const audioInput = document.getElementById('audioInput');
+        const audioUploadContainer = document.getElementById('audio-upload-container');
 
         fileInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
@@ -527,6 +538,7 @@ loginBtn.addEventListener('click', () => {
                     statusText.classList.add('text-red-400');
                     uploadBtn.classList.add('hidden');
                     previewContainer.classList.add('hidden');
+                    audioUploadContainer.classList.add('hidden');
                     fileInput.value = ""; 
                     return; 
                 }
@@ -535,6 +547,7 @@ loginBtn.addEventListener('click', () => {
                     statusText.classList.add('text-red-400');
                     uploadBtn.classList.add('hidden');
                     previewContainer.classList.add('hidden');
+                    audioUploadContainer.classList.add('hidden');
                     fileInput.value = ""; 
                     return; 
                 }
@@ -543,10 +556,12 @@ loginBtn.addEventListener('click', () => {
                 localViewer.removeAttribute('crossorigin');
                 localViewer.setAttribute('src', URL.createObjectURL(file));
                 previewContainer.classList.remove('hidden');
+                audioUploadContainer.classList.remove('hidden');
                 uploadBtn.classList.remove('hidden');
             } else {
                 manualFileName.innerText = "Max 50MB";
                 previewContainer.classList.add('hidden');
+                audioUploadContainer.classList.add('hidden');
                 uploadBtn.classList.add('hidden');
             }
         });
@@ -557,6 +572,7 @@ loginBtn.addEventListener('click', () => {
             
             uploadBtn.disabled = true;
             fileInput.disabled = true;
+            audioInput.disabled = true;
 
             statusText.innerText = "";
             progressWrapper.classList.remove('hidden');
@@ -574,17 +590,37 @@ loginBtn.addEventListener('click', () => {
                     alert("Upload failed: " + error.message); 
                     uploadBtn.disabled = false; 
                     fileInput.disabled = false;
+                    audioInput.disabled = false;
                 }, 
                 () => {
-                    statusText.innerText = "Processing & Securing Link...";
+                    statusText.innerText = "Securing 3D Model...";
                     const startingScans = userIsPro ? 1000 : 100;
 
                     getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
+                        
+                        // Handle Audio Upload Here
+                        let audioDownloadUrl = null;
+                        const audioFile = audioInput.files[0];
+                        
+                        if (audioFile) {
+                            statusText.innerText = "Uploading Audio Track...";
+                            try {
+                                const audioRef = ref(storage, 'models/audio_' + currentUser.uid + '_' + Date.now() + '_' + audioFile.name);
+                                await uploadBytesResumable(audioRef, audioFile);
+                                audioDownloadUrl = await getDownloadURL(audioRef);
+                            } catch(err) {
+                                console.error("Audio Upload failed: ", err);
+                            }
+                        }
+
+                        statusText.innerText = "Saving to Gallery...";
+
                         await addDoc(collection(db, "clients"), {
                             uid: currentUser.uid,          
                             userEmail: currentUser.email,  
                             fileName: file.name,
                             modelUrl: downloadURL,
+                            audioUrl: audioDownloadUrl, // Now saving audio to DB!
                             scanCount: 0,
                             maxScans: startingScans,                   
                             createdAt: serverTimestamp()

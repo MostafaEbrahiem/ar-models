@@ -92,6 +92,7 @@
             <p id="debug-text" class="text-xs text-outline-variant font-mono max-w-full break-all bg-surface-container-high p-4 rounded-lg border border-outline-variant/20"></p>
         </div>
 
+        <!-- max-camera-orbit changed from 1000% to 200% to limit zoom out -->
         <model-viewer 
             id="main-viewer" 
             class="w-full h-full" 
@@ -105,8 +106,8 @@
             environment-image="neutral" 
             exposure="1" 
             shadow-intensity="1"
-            camera-orbit="auto auto 500%" 
-            max-camera-orbit="auto auto 1000%"
+            camera-orbit="auto auto auto" 
+            max-camera-orbit="auto auto 200%"
             src="">
             
             <button id="ar-button" slot="ar-button" class="bg-gradient-to-r from-primary to-secondary text-slate-900 px-6 py-3 font-headline font-bold text-sm tracking-tight rounded-lg shadow-[0_0_15px_rgba(0,210,255,0.4)] hover:scale-105 transition-transform z-50">
@@ -114,10 +115,16 @@
                 VIEW IN YOUR SPACE
             </button>
             
-            <div slot="poster" id="loading-poster" class="absolute inset-0 flex items-center justify-center bg-surface-container-lowest z-40">
-                <div class="flex flex-col items-center gap-4">
-                    <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                    <span class="font-headline text-on-surface-variant tracking-widest text-xs uppercase">Initializing Hologram</span>
+            <!-- New Loading Bar UI -->
+            <div slot="poster" id="loading-poster" class="absolute inset-0 flex flex-col items-center justify-center bg-surface-container-lowest z-40">
+                <div class="w-64 max-w-[80vw]">
+                    <div class="h-1.5 w-full bg-surface-variant rounded-full overflow-hidden border border-white/5">
+                        <div id="custom-progress-bar" class="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-300 shadow-[0_0_10px_rgba(114,220,255,0.5)]" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-3">
+                        <span class="font-headline text-on-surface-variant tracking-widest text-[10px] uppercase">Initializing Hologram</span>
+                        <span id="custom-progress-text" class="font-headline text-primary font-bold tracking-widest text-[10px]">0%</span>
+                    </div>
                 </div>
             </div>
 
@@ -136,34 +143,62 @@
 
         </model-viewer>
 
-        <footer class="absolute bottom-6 left-0 w-full flex justify-center pointer-events-none z-10">
-            <a href="index.html" class="pointer-events-auto group flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 transition-all hover:bg-black/60 shadow-lg">
-                <span class="text-[10px] font-label text-on-surface-variant tracking-[0.2em] uppercase">Powered by</span>
-                <span class="font-headline font-bold text-xs tracking-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent group-hover:opacity-80 transition-opacity">3Dmosta</span>
-            </a>
-        </footer>
     </main>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         let modelUrl = urlParams.get('model');
+        let audioUrl = urlParams.get('audio');
+        
         const viewer = document.getElementById('main-viewer');
         const errorOverlay = document.getElementById('error-overlay');
         const debugText = document.getElementById('debug-text');
         const assetTitle = document.getElementById('asset-title');
         const loadingPoster = document.getElementById('loading-poster');
 
+        // Real-time progress bar logic
+        viewer.addEventListener('progress', (event) => {
+            const percent = Math.round(event.detail.totalProgress * 100);
+            const pBar = document.getElementById('custom-progress-bar');
+            const pText = document.getElementById('custom-progress-text');
+            if (pBar) pBar.style.width = percent + '%';
+            if (pText) pText.innerText = percent + '%';
+        });
+
         if (modelUrl) {
-            // Fixes Firebase storage URL formatting issues automatically
             if (modelUrl.includes('/o/models/')) {
                 modelUrl = modelUrl.replace('/o/models/', '/o/models%2F');
             }
 
-            // Set the 3D model source
             viewer.setAttribute('src', modelUrl);
             assetTitle.innerText = "HOLOGRAPHIC ASSET";
             
-            // Handle loading errors
+            // --- STRICT ANDROID AUDIO FIX ---
+            if (audioUrl) {
+                const interactionSound = new Audio(audioUrl);
+                interactionSound.loop = true; 
+                interactionSound.crossOrigin = "anonymous"; // Prevents CORS blocking
+                let hasPlayed = false;
+
+                const unlockAudio = () => {
+                    if (!hasPlayed) {
+                        interactionSound.play().then(() => {
+                            hasPlayed = true;
+                            // Clean up listeners so it doesn't try to restart on every tap
+                            window.removeEventListener('touchstart', unlockAudio);
+                            window.removeEventListener('mousedown', unlockAudio);
+                        }).catch(error => {
+                            console.log("Audio blocked by browser:", error);
+                        });
+                    }
+                };
+
+                // Attaching to the global window object ensures the strictest Android 
+                // browsers register the user intent properly, unlike attaching to the viewer.
+                window.addEventListener('touchstart', unlockAudio, { once: true });
+                window.addEventListener('mousedown', unlockAudio, { once: true });
+            }
+
             viewer.addEventListener('error', (event) => {
                 loadingPoster.style.display = 'none';
                 errorOverlay.classList.remove('hidden');
@@ -171,7 +206,6 @@
             });
 
         } else {
-            // No model provided in the URL
             loadingPoster.style.display = 'none';
             errorOverlay.classList.remove('hidden');
             debugText.innerText = "No model ID was found in the web address parameters.";
