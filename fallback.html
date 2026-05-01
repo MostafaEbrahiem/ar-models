@@ -171,31 +171,39 @@
             viewer.setAttribute('src', modelUrl);
             assetTitle.innerText = "HOLOGRAPHIC ASSET";
             
-            // --- UPDATED AUDIO LOGIC ---
+            // --- THE APPLE/IOS SURVIVAL KIT FOR AUDIO ---
             if (audioUrl) {
                 const interactionSound = new Audio(audioUrl);
                 interactionSound.loop = true; 
-                // REMOVED crossOrigin="anonymous" to fix the Firebase fetching error
+                interactionSound.preload = "auto"; // Tell iOS to get ready
                 let hasPlayed = false;
 
                 const unlockAudio = (e) => {
                     if (!hasPlayed) {
-                        hasPlayed = true; // Lock immediately so multiple fingers don't trigger it 10 times
-                        interactionSound.play().then(() => {
-                            // Audio is successfully playing, remove listeners
-                            window.removeEventListener('pointerdown', unlockAudio, true);
-                            window.removeEventListener('touchstart', unlockAudio, true);
-                        }).catch(error => {
-                            console.log("Audio play prevented, waiting for next touch:", error);
-                            hasPlayed = false; // Reset if it failed so the next touch can try again
-                        });
+                        hasPlayed = true; 
+                        
+                        const playPromise = interactionSound.play();
+                        
+                        if (playPromise !== undefined) {
+                            playPromise.then(() => {
+                                // Once playing successfully, we delete the listeners
+                                window.removeEventListener('touchstart', unlockAudio, true);
+                                window.removeEventListener('touchend', unlockAudio, true);
+                                window.removeEventListener('click', unlockAudio, true);
+                            }).catch(error => {
+                                console.log("Safari blocked it, waiting for next tap:", error);
+                                hasPlayed = false; // Reset so they can try touching again
+                            });
+                        }
                     }
                 };
 
-                // Use "capture: true" (the 'true' at the end) to intercept the touch 
-                // BEFORE the <model-viewer> swallows the event for 3D rotation.
-                window.addEventListener('pointerdown', unlockAudio, true);
+                // iPhones sometimes ignore 'pointerdown'. 
+                // We bind to ALL of these with 'capture: true' to intercept the finger 
+                // before the 3D model viewer eats the event.
                 window.addEventListener('touchstart', unlockAudio, true);
+                window.addEventListener('touchend', unlockAudio, true);
+                window.addEventListener('click', unlockAudio, true);
             }
 
             viewer.addEventListener('error', (event) => {
