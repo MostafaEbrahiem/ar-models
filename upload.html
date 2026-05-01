@@ -367,7 +367,7 @@ loginBtn.addEventListener('click', () => {
                 const scansUsed = data.scanCount || 0;
                 const maxScans = data.maxScans || 100;
                 const displayName = data.fileName ? data.fileName.replace('.glb', '') : 'My 3D Model';
-                const clientLink = `https://3dmosta.com/?id=${docId}`;
+                const clientLink = `https://dryclean-307e9.web.app/?id=${docId}`;
                 
                 const isLimitReached = scansUsed >= maxScans;
                 const scanColorClass = isLimitReached ? "bg-red-500/20 text-red-400 border-red-500/30" : "bg-surface-container-high/90 text-on-surface border-outline-variant/30";
