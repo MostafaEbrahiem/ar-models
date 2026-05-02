@@ -152,20 +152,20 @@
         const loginBtn = document.getElementById('loginBtn');
         
         // LOGIN ROUTING
-loginBtn.addEventListener('click', () => {
-    loginBtn.disabled = true;
-    const originalText = loginBtn.innerText;
-    loginBtn.innerHTML = `<span class="material-symbols-outlined text-sm animate-spin inline-block align-middle mr-2">refresh</span> Connecting...`;
-    
-    signInWithPopup(auth, new GoogleAuthProvider()).catch(err => {
-        // If they just close the popup, don't show an ugly error, just reset the button
-        if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-            alert("Login Failed: " + err.message);
-        }
-        loginBtn.disabled = false;
-        loginBtn.innerHTML = originalText;
-    });
-});
+        loginBtn.addEventListener('click', () => {
+            loginBtn.disabled = true;
+            const originalText = loginBtn.innerText;
+            loginBtn.innerHTML = `<span class="material-symbols-outlined text-sm animate-spin inline-block align-middle mr-2">refresh</span> Connecting...`;
+            
+            signInWithPopup(auth, new GoogleAuthProvider()).catch(err => {
+                // If they just close the popup, don't show an ugly error, just reset the button
+                if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+                    alert("Login Failed: " + err.message);
+                }
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = originalText;
+            });
+        });
         document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth).then(() => location.reload()));
         document.getElementById('logoutDeniedBtn').addEventListener('click', () => signOut(auth).then(() => location.reload()));
 
@@ -252,6 +252,12 @@ loginBtn.addEventListener('click', () => {
                         const displayName = model.fileName ? model.fileName.replace('.glb', '') : 'Unnamed Asset';
                         const scansUsed = model.scanCount || 0;
                         const encodedUrl = encodeURIComponent(model.modelUrl);
+                        
+                        // AUDIO FIX: Admin Viewer
+                        let viewUrl = `fallback.html?model=${encodedUrl}`;
+                        if (model.audioUrl) {
+                            viewUrl += `&audio=${encodeURIComponent(model.audioUrl)}`;
+                        }
 
                         modelsHTML += `
                             <div class="flex items-center justify-between p-3 bg-surface-container-high/40 rounded border border-white/5" id="model-item-${model.id}">
@@ -260,7 +266,7 @@ loginBtn.addEventListener('click', () => {
                                     <span class="text-xs text-on-surface-variant">Usage: ${scansUsed}/${model.maxScans || 100} scans</span>
                                 </div>
                                 <div class="flex space-x-2 flex-shrink-0">
-                                    <button class="p-2 hover:bg-primary/10 text-primary rounded transition-colors" onclick="window.open('fallback.html?model=${encodedUrl}', '_blank')"><span class="material-symbols-outlined text-sm">visibility</span></button>
+                                    <button class="p-2 hover:bg-primary/10 text-primary rounded transition-colors" onclick="window.open('${viewUrl}', '_blank')"><span class="material-symbols-outlined text-sm">visibility</span></button>
                                     <button class="p-2 hover:bg-error/10 text-error rounded transition-colors delete-model-btn" data-id="${model.id}" data-uid="${uid}" data-filename="${model.fileName}" data-name="${displayName}"><span class="material-symbols-outlined text-sm pointer-events-none">delete</span></button>
                                 </div>
                             </div>
@@ -404,8 +410,6 @@ loginBtn.addEventListener('click', () => {
             // 4. Delete Model Listener
             document.querySelectorAll('.delete-model-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
-                    // Because we have an icon inside the button, e.target might be the span or the button. 
-                    // Added pointer-events-none to the span in HTML to fix this, so e.target is always the button.
                     const docId = e.target.getAttribute('data-id');
                     const fileUid = e.target.getAttribute('data-uid');
                     const fileName = e.target.getAttribute('data-filename');

@@ -355,7 +355,7 @@
         const scannerContent = document.getElementById('scanner-content');
         const loadingText = document.getElementById('loading-text');
 
-        // =========================================
+// =========================================
         // SHOWCASE LOGIC (With High Res QR Support)
         // =========================================
         async function loadShowcaseModels() {
@@ -363,7 +363,6 @@
             if (!showcaseGrid) return;
 
             try {
-                // Fetch models uploaded by admin
                 const q = query(collection(db, "clients"), where("userEmail", "==", "mostafaebrahiem1998@gmail.com"));
                 const querySnapshot = await getDocs(q);
 
@@ -412,15 +411,18 @@
 
                     showcaseGrid.appendChild(card);
 
-                    // Generate HIGH RES QR (512px) - scaled down by CSS
                     const qrContainer = document.getElementById(`qr-showcase-${docId}`);
                     new QRCode(qrContainer, { text: clientLink, width: 512, height: 512, colorDark : "#000000", colorLight : "#ffffff" });
 
+                    // AUDIO FIX: Now attaches audioUrl if it exists
                     document.getElementById(`viewBtn-showcase-${docId}`).addEventListener('click', () => {
-                        window.open(`fallback.html?model=${encodeURIComponent(safeUrl)}`, '_blank');
+                        let targetUrl = `fallback.html?model=${encodeURIComponent(safeUrl)}`;
+                        if (data.audioUrl) {
+                            targetUrl += `&audio=${encodeURIComponent(data.audioUrl)}`;
+                        }
+                        window.open(targetUrl, '_blank');
                     });
 
-                    // Download Button
                     document.getElementById(`downloadBtn-showcase-${docId}`).addEventListener('click', () => {
                         const canvas = qrContainer.querySelector('canvas');
                         const img = qrContainer.querySelector('img');
@@ -441,21 +443,19 @@
         }
 
         // =========================================
-        // ROUTER LOGIC
+        // ROUTER LOGIC (The crucial QR fix!)
         // =========================================
         async function checkRoute() {
             const urlParams = new URLSearchParams(window.location.search);
             const clientId = urlParams.get('id');
 
             if (!clientId) {
-                // Show Landing
                 landingPage.style.display = 'block';
                 scannerPage.classList.add('hidden');
                 loadShowcaseModels();
                 return; 
             }
 
-            // Show Loader
             landingPage.style.display = 'none';
             scannerPage.classList.remove('hidden');
             scannerPage.classList.add('flex');
@@ -476,8 +476,14 @@
                     }
 
                     await updateDoc(docRef, { scanCount: increment(1) });
+                    
+                    // AUDIO FIX: Attach the audio URL to the redirect!
                     const safeModelUrl = encodeURIComponent(data.modelUrl);
-                    window.location.href = `fallback.html?model=${safeModelUrl}`;
+                    let redirectUrl = `fallback.html?model=${safeModelUrl}`;
+                    if (data.audioUrl) {
+                        redirectUrl += `&audio=${encodeURIComponent(data.audioUrl)}`;
+                    }
+                    window.location.href = redirectUrl;
 
                 } else {
                     loadingText.innerText = "Experience Not Found";
