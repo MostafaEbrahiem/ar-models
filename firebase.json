@@ -13,7 +13,8 @@
       ]
     }
   ],
-  "hosting": {
+"hosting": {
+    "site": "qr-to-3d", 
     "public": ".",
     "ignore": [
       "firebase.json",

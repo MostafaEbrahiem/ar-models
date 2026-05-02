@@ -135,7 +135,6 @@
                             <model-viewer id="local-viewer" auto-rotate camera-controls autoplay environment-image="neutral" shadow-intensity="1" camera-orbit="auto auto 500%" max-camera-orbit="auto auto 1000%" class="absolute inset-0 w-full h-full"></model-viewer>
                         </div>
 
-                        <!-- NEW: Optional Audio Upload -->
                         <div id="audio-upload-container" class="hidden mt-4 bg-surface-container-low p-4 rounded-xl border border-outline-variant/30">
                             <label for="audioInput" class="block text-sm font-bold text-on-surface mb-2 flex items-center gap-2">
                                 <span class="material-symbols-outlined text-primary text-sm">audio_file</span> Add Interaction Sound (Optional)
@@ -375,7 +374,7 @@
                 const scansUsed = data.scanCount || 0;
                 const maxScans = data.maxScans || 100;
                 const displayName = data.fileName ? data.fileName.replace('.glb', '') : 'My 3D Model';
-                const clientLink = `https://dryclean-307e9.web.app/?id=${docId}`;
+                const clientLink = `https://qr-to-3d.web.app/?id=${docId}`;
                 
                 const isLimitReached = scansUsed >= maxScans;
                 const scanColorClass = isLimitReached ? "bg-red-500/20 text-red-400 border-red-500/30" : "bg-surface-container-high/90 text-on-surface border-outline-variant/30";
@@ -411,7 +410,6 @@
                             <div class="w-12 h-12 bg-white p-1 rounded-sm flex-shrink-0 qr-ui-wrapper" id="qr-${docId}"></div>
                         </div>
                         
-                        <!-- NEW GRID WITH COPY LINK BUTTON -->
                         <div class="grid grid-cols-2 gap-3 pt-4 mt-auto">
                             <button id="copyBtn-${docId}" class="col-span-2 flex items-center justify-center gap-2 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 py-2 px-4 rounded-lg text-sm font-bold transition-colors">
                                 <span class="material-symbols-outlined text-sm">link</span> Copy Share Link
@@ -434,7 +432,6 @@
                 const qrContainer = document.getElementById(`qr-${docId}`);
                 new QRCode(qrContainer, { text: clientLink, width: 512, height: 512, colorDark : "#000000", colorLight : "#ffffff" });
 
-                // NEW COPY LINK LOGIC
                 document.getElementById(`copyBtn-${docId}`).addEventListener('click', (e) => {
                     navigator.clipboard.writeText(clientLink).then(() => {
                         const btn = e.currentTarget;
